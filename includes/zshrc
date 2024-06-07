@@ -2,7 +2,7 @@
 # Initialization code that may require console input (password prompts, [y/n]
 # confirmations, etc.) must go above this block; everything else may go below.
 if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
-#  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
+  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
 DISABLE_AUTO_UPDATE="true"
@@ -204,19 +204,7 @@ FAILMAIL() {
 
 cdpath=(. ~/Projects ~/Desktop ~/DropBox ~/misc)
 
-rkj_debug "Executing DOTFILES/includes/zshrc-drives"
-if hash timeout 2>/dev/null; then
-  for mnt in `timeout 1 df | grep /dev/ | awk '{print $6}'`; do
-    echo_free $mnt;
-  done
-else
-  echo "Please install coreutils package to get timeout command"
-fi
-echo -ne "Today is "; date
-echo -ne "Uptime: "; uptime
-echo
-command fortune 2>/dev/null || echo "Missing fortune"
-
+# source $DOTFILES/includes/zsh_echo.zsh
 
 rkj_debug "Executing DOTFILES/includes/zshrc-rvm"
 [[ -s "$HOME/.rvm/scripts/rvm" ]] && . "$HOME/.rvm/scripts/rvm"
