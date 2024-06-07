@@ -2,6 +2,12 @@
   name  = Roman Kamyk
   email = roman.kamyk@gmail.com
 
+[gpg]
+	format = ssh
+
+[commit]
+	gpgsign = true
+
 [core]
   excludesfile = ~/.gitignore
   editor = /usr/bin/vim
@@ -68,6 +74,7 @@
   line-graphics        = utf-8
   tab-size             = 2
   line-number-interval = 1
+
 [tig "bind"]
   main = b view-branch
 
