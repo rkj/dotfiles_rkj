@@ -78,3 +78,5 @@
 [tig "bind"]
   main = b view-branch
 
+[sumodule]
+  recurse = true

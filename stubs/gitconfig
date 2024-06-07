@@ -2,4 +2,5 @@
   path = ~/misc/dotfiles_rkj/includes/gitconfig
 # any customizations below
 [user]
+  signingkey = ~/.ssh/TODO.pub
 
