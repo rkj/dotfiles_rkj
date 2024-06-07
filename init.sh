@@ -1,11 +1,15 @@
 #!/bin/zsh
+# It's ok to call this script multiple times, it will update all the links
+# to the newest version and create any new stubs.
 
-# find proper path
+# Find proper path
 root=`dirname "$PWD"/"$0"`/
 cd $root
 root=`pwd`
 
-# make stubs
+git submodule update --init --recursive
+
+# Make stub files.
 for stub in stubs/*; do
   file=`basename $stub`
   if [ ! -e $HOME/.$file ]; then
@@ -15,19 +19,26 @@ for stub in stubs/*; do
   fi
 done;
 
-# make symlinks
+# Update symlinks.
 for link in links/**/* vim; do
   file=`basename $link`
   ln -nfs $root/$link $HOME/.$file
 done;
 [ ! -e $HOME/.xmonad/xmonad.hs ] && mkdir -p $HOME/.xmonad && ln -nfs $root/xmonad.hs $HOME/.xmonad/xmonad.hs
-mkdir vim/tmp vim/backup vim/cache
+mkdir -p vim/tmp vim/backup vim/cache
 
-# prepare profile
+# Prepare profile if needed.
 if [ ! -e $HOME/.profile ]; then
   echo "export DOTFILES=$root"                 >  $HOME/.profile
   echo 'source $DOTFILES/includes/profile.sh'  >> $HOME/.profile
 else
-  echo "Remember to add 'export DOTFILES="$root"\nsource \$DOTFILES/includes/profile.sh' to your .profile if you haven't already."
+  cat <<EOQ
+Remember to add:
+
+export DOTFILES="$root"
+source \$DOTFILES/includes/profile.sh
+
+to your .profile if you haven't already.
+EOQ
 fi
 
