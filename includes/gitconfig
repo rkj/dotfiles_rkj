@@ -11,6 +11,7 @@
 [core]
   excludesfile = ~/.gitignore
   editor = /usr/bin/vim
+  commentchar = ";"
 
 [color]
   ui     = auto
@@ -80,3 +81,4 @@
 
 [sumodule]
   recurse = true
+
