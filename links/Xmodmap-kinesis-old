@@ -1,0 +1,28 @@
+! Kinesis Mac Keyboard mapping
+
+! handled by setxkbmap pl -option caps:swapescape
+! Caps_Lock -> Control_L
+!keycode 66 = Control_L
+
+! Escape -> Caps_Lock
+!keycode 9 = Caps_Lock
+
+! Control_L -> Escape
+keycode 37 = Escape
+remove control = Escape
+
+! right command -> alt
+keycode 134 = ISO_Level3_Shift
+
+!! clear mod4
+!! remove mod1 = Alt_L
+!! ! right alt -> command
+!! ! left command -> alt
+!! add mod1 = Super_L
+!! ! left alt, and right alt -> mod4
+!! add mod4 = Alt_L
+!! keycode 108 = Alt_R
+!! add mod4 = Alt_R
+
+
+pointer = 1 2 3 5 4 6 7 8 9 10 11 12 13 14

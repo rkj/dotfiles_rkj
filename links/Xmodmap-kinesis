@@ -1,0 +1,8 @@
+remove control = Control_L
+keycode 37 = Meta_L
+keycode 133 = Alt_L
+add control = Control_L
+remove mod1 = Meta_L
+add mod1 = Alt_L
+clear mod3
+add mod3 = Meta_L

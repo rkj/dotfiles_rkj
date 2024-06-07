@@ -1,0 +1,5 @@
+[ -z "$PS1" ] && return
+ZSH_DEBUG=false
+#ZSH_DEBUG=true
+[[ -e $HOME/.profile ]] && source $HOME/.profile
+source $DOTFILES/includes/zshrc

@@ -1,0 +1,4 @@
+[ui]
+username = Roman Kamyk <roman.kamyk@gmail.com>
+%include $DOTFILES/includes/hgrc
+

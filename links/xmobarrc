@@ -1,0 +1,34 @@
+Config { font = "-misc-fixed-*-*-*-*-12-*-*-*-*-*-*-*"
+       , borderColor = "black"
+       , border = TopB
+       , bgColor = "black"
+       , fgColor = "grey"
+       , position = BottomW C 60
+       , lowerOnStart = False
+       , commands = [ Run Weather "KNUQ" [
+                                          "-t", "<station>: <tempC>C <rh>% <pressure>kPa; <wind>"
+                                          , "-L", "17"
+                                          , "-H", "28"
+                                          , "--normal", "green"
+                                          , "--high", "red"
+                                          , "--low", "lightblue"
+                                          , "--maxwidth", "5"
+                                          ] 36000
+                    , Run Network "eth0" ["-L", "0", "-H", "32", "--normal", "green", "--high", "red"] 10
+                    , Run Network "eth1" ["-L", "0", "-H", "32", "--normal", "green", "--high", "red"] 10
+                    , Run Cpu ["-L", "3", "-H", "50", "--normal", "green", "--high", "red"] 10
+                    , Run Memory ["-t", "<usedratio>%"] 10
+                    , Run Swap ["-t", "<usedratio>%"] 10
+                    , Run Com "uname" ["-s", "-r"] "" 36000
+                    , Run Com "myweather" ["KNUQ", "Moffett"] "weather" 36000
+                    , Run Date "%a, %Y-%m-%d %H:%M:%S" "date" 10
+                    , Run StdinReader
+                    ]
+       , sepChar = "%"
+       , alignSep = "}{"
+       , template = "%StdinReader% }{ %cpu% | Mem: %memory%/%swap% | %eth0% <fc=#ee9a00>%date%</fc> | %weather% "
+       , allDesktops = True
+       , overrideRedirect = False
+       , hideOnStart = False
+       , persistent = True
+       }

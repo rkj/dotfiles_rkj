@@ -1,0 +1,67 @@
+[ui]
+ignore = ~/.hgignore
+commitsubrepos = no
+
+[extensions]
+hgext.churn     =
+hgext.color     =
+hgext.convert   =
+hgext.graphlog  =
+hgext.purge     =
+hgext.rebase    =
+hgext.record    =
+hgk             =
+pager           =
+progress        =
+share           =
+
+# prompt          = $DOTFILES/hgext/hg-prompt/prompt.py
+# review          = $DOTFILES/hgext/hg-review/review/
+
+# activity        = $DOTFILES/hgext/Hgactivity/activity.py
+# cutehg          =
+# fetch           =
+# hgext.extdiff   =
+# hgext.schemes   =
+# hggit           =
+# hgsubversion    = $DOTFILES/hgext/hgsubversion/hgsubversion
+
+[diff]
+git=true
+showfunc=true
+
+[extdiff]
+cmd.diffw = diff
+opts.diffw = -w -r -N -p -U 8 -p
+cmd.opendiff = opendiff-w
+
+[hgk]
+
+[merge-tools]
+filemerge.executable = /usr/local/bin/opendiff-w
+filemerge.args = $local $other -ancestor $base -merge $output
+
+[qrebase]
+backup=True
+
+[alias]
+llog = log --limit 5
+changelog = log --style=changelog
+cl = changelog --limit 5
+qstatus = status --rev -2:.
+br = branches --active
+b = branch
+pr = pull --rebase
+cim = commit -m
+__mystatus = status # http://stackoverflow.com/a/833387/37086
+st = !hg __mystatus $($HG root) $HG_ARGS
+
+[hgview]
+interface = curses
+
+[pager]
+# attend =
+# ignore = clone, pull, push, commit, revert, status, clean
+
+[subrepos]
+git:allowed=true

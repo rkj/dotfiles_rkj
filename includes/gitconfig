@@ -1,0 +1,73 @@
+[user]
+  name  = Roman Kamyk
+  email = roman.kamyk@gmail.com
+
+[core]
+  excludesfile = ~/.gitignore
+  editor = /usr/bin/vim
+
+[color]
+  ui     = auto
+  status = auto
+  branch = auto
+
+[pager]
+  color = true
+
+[alias]
+  amend        = commit --all --amend
+  b            = note -v
+  br           = branch -l
+  cam          = commit -am
+  ci           = commit
+  cim          = commit -m
+  co           = checkout
+  conflicts    = !"git st | grep ^U"
+  d            = diff --color-words
+  diffq        = diff --stat
+  fixconflicts = !"vim `git conflicts | cut -f2- -d' '`"
+  lg           = log --graph --full-history --all --color --oneline --decorate
+  lg2          = log --graph --full-history --all --color --oneline --decorate --min-parents=2
+  lo           = log --oneline --decorate
+  st           = status -sb
+  tags         = tag -l
+  up           = !git remote update -p; git merge --ff-only @{u}
+
+  view1        = !"gitg"
+  view2        = !"giggle"
+  view3        = !"gitk"
+  view4        = !"tig"
+
+[apply]
+  whitespace = strip
+
+[merge]
+  tool = vimdiff
+
+[mergetool]
+  prompt = false
+
+[mergetool "vimdiffnice"]
+  cmd = vimdiff -c \"wincmd J\" -c \"0\" $MERGED $LOCAL $BASE $REMOTE
+
+[rerere]
+  enabled = true
+
+[push]
+  default = simple
+
+[pull]
+  ff=only
+
+# view tools
+[giggle]
+  main-window-view = HistoryView
+
+[tig]
+  show-date            = local
+  line-graphics        = utf-8
+  tab-size             = 2
+  line-number-interval = 1
+[tig "bind"]
+  main = b view-branch
+

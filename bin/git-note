@@ -1,0 +1,28 @@
+#!/usr/bin/env ruby
+#
+# Stores text note in local git repository config.
+
+require 'optparse'
+
+branch = nil
+list = false
+verbose = false
+(op = OptionParser.new { |opts|
+  opts.banner = "Usage: #{$PROGRAM_NAME} [options]"
+  opts.on("-b BRANCH", "--branch", "Branch to attach note to. Default: current") { |o| branch = o }
+  opts.on("-l", "--list", "Lists all the branches with notes") { |o| list = true }
+  opts.on("-v", "--verbose", "List also branches with no notes") { |o| verbose = true; list = true }
+}).parse!
+
+if list
+  branches = `git branch | cut -c2-`
+  branches.each_line do |branch|
+    note = `git note -b #{branch}`.strip
+    puts "#{branch.strip} \e[1;32m#{note}\e[0m" if verbose || !note.empty?
+  end
+else
+  branch = `git symbolic-ref HEAD | sed "s/refs\\/heads\\///"`.strip if branch.nil?
+  value = ARGV.length > 0 ? %{"#{ARGV.join(' ')}"} : ''
+  cmd = "git config branch.#{branch}.note #{value}"
+  system(cmd)
+end

@@ -1,0 +1,12 @@
+syntax: glob
+.VimballRecord
+vim/*/*/*/tags
+vim/yankring_history_v2.txt
+vim/.netrwhist
+vim/backup
+vim/tmp
+vim/cache
+vim/data
+vim/eclim
+vim/spell
+

@@ -1,0 +1,209 @@
+filetype off
+runtime bundle/vim-pathogen/autoload/pathogen.vim
+call pathogen#infect()
+call pathogen#helptags()
+filetype plugin indent on
+
+let g:LargeFile=10
+
+" colorscheme desert " highlight (red for spell) is bad
+" colorscheme desert256
+" colorscheme 256-grayvim
+" colorscheme eclm_wombat
+" colorscheme native
+colorscheme zenburn
+if has('gui_running')
+  colorscheme solarized
+end
+set guifont=Liberation\ Mono\ 9
+
+" to show all the leader mappings:
+" :verbose map <leader>
+let mapleader=','
+
+syntax on
+set autoindent
+set autowriteall "before :make
+set backspace=indent,eol,start
+set colorcolumn=81,101
+set cursorline
+set encoding=utf-8
+set expandtab
+set fileencodings=utf-8 ",latin2,cp1250
+set formatoptions=qrnl
+set history=1000
+set keymodel=startsel,stopsel
+set laststatus=2
+set lazyredraw
+set list " invisible characters
+set listchars=tab:▸\ ,eol:¬
+set matchtime=10 " Matching parenthesis
+set mouse=a
+set nocompatible
+set pastetoggle=<F7>
+set number relativenumber
+set ruler
+set scrolloff=3
+set selectmode=key,mouse " Select-mode
+set shiftwidth=2
+set showbreak=↪
+set showcmd
+set showmode
+set smartindent
+set smarttab
+set spell spelllang=en
+set syntax=on
+set tabstop=2
+set termencoding=utf-8
+set ttyfast
+set undofile
+set virtualedit=block
+set visualbell
+set whichwrap=b,s,h,l,<,>,[,]
+set wildmenu
+set wildmode=list:longest
+set wrap
+
+" search
+set incsearch       "incremental search"
+set gdefault
+set hlsearch        "high light search"
+set ignorecase      "ignore case"
+set smartcase       "unless there's mixture of case"
+set magic           "magic characters in patterns"
+set showmatch
+
+nnoremap / /\v
+vnoremap / /\v
+nnoremap <leader><space> :noh<cr>
+
+nnoremap j gj
+nnoremap k gk
+
+nnoremap ; :
+
+" Color trailing whitespaces
+highlight default link TrailingWhitespace Error
+augroup filetypedetect
+  autocmd WinEnter,BufNewFile,BufRead * match TrailingWhitespace /\s\+$/
+augroup END
+autocmd InsertEnter * match none
+autocmd InsertLeave * match TrailingWhitespace /\s\+$/
+
+" auto write on lost focus
+autocmd FocusLost * :wa
+
+" jump to last edited line in the file
+:au BufReadPost * if line("'\"") > 0 && line("'\"") <= line("$") | exe "normal g'\"" | endif
+
+" multiple buffers
+nnoremap <leader>ww <C-w>s<C-w>j
+nnoremap <leader>wv <C-w>v<C-w>l
+nnoremap <C-h> <C-w>h
+nnoremap <C-j> <C-w>j
+nnoremap <C-k> <C-w>k
+nnoremap <C-l> <C-w>l
+
+"remove trailing whitespace
+nnoremap <leader>W :%s/\s\+$//<cr>:let @/=''<CR>
+" Remove trailing whitespace
+nnoremap <leader>rw :%s/\s\+$//<CR>
+
+nnoremap <leader>a :Ack
+" select last paste
+nnoremap <leader>ft Vatzf
+" format paragraph
+nnoremap <leader>q gqip
+" select current paragraph
+nnoremap <leader>v V`]
+" edit VIMRC
+nnoremap <leader>ev <C-w>s<C-w>j:e $MYVIMRC<cr>
+inoremap jj <ESC>
+inoremap kk <ESC>
+" F1 -> ESC
+inoremap <F1> <ESC>
+nnoremap <F1> <ESC>
+vnoremap <F1> <ESC>
+
+nnoremap <F2> :NERDTree .<CR>
+
+" YankRing
+nnoremap <silent> <F3> :YRShow<cr>
+inoremap <silent> <F3> <ESC>:YRShow<cr>
+let g:yankring_history_dir = '$HOME/.vim'
+
+" Taglist
+nnoremap <silent> <F4> :TlistToggle<CR>
+inoremap <silent> <F4> <ESC>:TlistToggle<CR>
+
+" paste system clipboard
+nnoremap <leader>p "+gp
+
+nnoremap <silent> <F6> :make<cr>
+inoremap <silent> <F6> <ESC>:make<cr>
+
+" Undo
+nnoremap <leader>u :undolist<cr>
+nnoremap <F5> :GundoToggle<CR>
+inoremap <F5> :GundoToggle<CR>
+
+" ctags
+nnoremap <leader>g :tag
+inoremap <F9>:!tags -R .
+nnoremap <F9>:!tags -R .
+
+nnoremap <leader>o :CtrlP<CR>
+let g:ctrlp_working_path_mode = ''
+
+" also used by ctrlP
+set wildignore+=*.o,*.obj,*.git,tmp,log,_site,doc,*.pyc
+
+"localvimrc
+let g:localvimrc_ask=0
+
+"backup
+set backup
+set backupdir=~/.vim/backup
+set directory=~/.vim/tmp
+set undodir=~/.vim/tmp
+
+"vimdiff
+set diffopt=filler,iwhite,vertical
+
+" copy to clipboard
+inoremap <F8> <ESC>1GvG"+y
+nnoremap <F8> 1GvG"+y
+vnoremap <F8> "+y
+
+" indenting on tab
+vnoremap <Tab>    >gv
+vnoremap <S-Tab>  <gv
+
+" run Ruby & Python
+autocmd BufRead *.py set makeprg=python\ %
+autocmd BufRead *.rb set makeprg=ruby\ %
+
+highlight ColorColumn ctermbg=DarkGray guibg=LightGray
+highlight Pmenu ctermfg=DarkGreen ctermbg=Black guifg=DarkGreen guibg=Black
+highlight PmenuSel term=bold gui=bold ctermfg=Black ctermbg=DarkGreen guifg=Black guibg=DarkGreen
+highlight clear SpellBad
+highlight SpellBad cterm=underline
+
+" prevent vim from quitting: use :quit/:wq if you really want to exit
+cabbrev q <c-r>=(getcmdtype()==':' && getcmdpos()==1 ? 'close' : 'q')<CR>
+
+" http://vim.wikia.com/wiki/Search_for_visually_selected_text
+vnoremap // y/<C-R>"<CR>
+
+" https://github.com/junegunn/vim-plug
+call plug#begin()
+Plug 'https://github.com/dart-lang/dart-vim-plugin.git'
+Plug 'https://github.com/natebosch/vim-lsc.git'
+Plug 'https://github.com/natebosch/vim-lsc-dart.git'
+Plug 'https://github.com/SirVer/ultisnips.git'
+Plug 'https://github.com/natebosch/dartlang-snippets.git'
+call plug#end()
+
+let g:lsc_auto_map = v:true
+
+

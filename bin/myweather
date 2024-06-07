@@ -1,0 +1,27 @@
+#!/usr/bin/env ruby
+# encoding: UTF-8
+
+require 'open-uri'
+
+station = ARGV[0] || "KNUQ"
+url = "http://weather.noaa.gov/pub/data/observations/metar/decoded/#{station}.TXT"
+
+data = open(url).read.split("\n")
+name = ARGV[1] || data[0].split(",")[0]
+date = data[1]
+data = Hash[*data[2..-1].map { |str| str.split(/:\s*/, 2) }.flatten]
+tempF, tempC = data["Temperature"].match(/(.+) F \((.+) C\)/)[1,2]
+pressure = data["Pressure (altimeter)"].match(/.*\((.+) hPa\)/)[1] rescue ""
+wind = data["Wind"] || ""
+if md = wind.match(/from the (.*) \((.*) degrees\) at (.*?) MPH \((.*?)\)( gusting to (.*) MPH)?.*:.*/)
+  windFrom, windDegrees, windSpeed, windSpeedKt, _, windGust = md[1..-1]
+  windSpeed = "#{windSpeed}-#{windGust}" if windGust
+  wind = "#{windSpeed}Mph #{windDegrees}°"
+elsif md = wind.match(/Variable at (.*?) MPH \((.*?)\)/)
+  wind = "#{md[1]}Mph"
+elsif md = wind.match(/Calm/)
+  wind = "Calm"
+end
+puts "#{name}: #{tempC}C #{data["Relative Humidity"]} #{pressure}hPa #{wind}"
+
+

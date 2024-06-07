@@ -1,0 +1,224 @@
+DISABLE_AUTO_UPDATE="true"
+plugins=(colorize debian golang rsync web-search zsh-autosuggestions zsh-syntax-highlighting)
+ZSH=$DOTFILES/oh-my-zsh
+ZSH_THEME="rkj"
+function rkj_vcs_info() {} # no vcs info
+echoerr() { echo "$@" 1>&2; }
+rkj_debug() {
+  $ZSH_DEBUG && echoerr "$(date +%H:%m:%S).$(($(date +%N)/1000000))" "$@"
+}
+rkj_debug "Executing DOTFILES/includes/zshrc-oh-my-zsh"
+source $ZSH/oh-my-zsh.sh
+
+zstyle ':completion:*:functions' ignored-patterns '_*'
+
+# fix stupid oh-my-zsh tweaks
+export LESS="FRX"
+unalias history
+
+HISTSIZE=1000000
+SAVEHIST=$HISTSIZE
+# to not be overwritten by bash
+HISTFILE=~/.zsh_history
+
+bindkey '^X^E' edit-command-line
+bindkey -e
+
+setopt HISTIGNOREDUPS
+setopt HIST_IGNORE_SPACE
+setopt HIST_REDUCE_BLANKS
+setopt EXTENDED_HISTORY # store date and duration of commands
+# in share_history mode duration of commands are not preserved
+unsetopt share_history inc_append_history
+setopt append_history
+
+setopt interactivecomments # comments are not executed in interactive shell
+
+setopt SH_WORD_SPLIT
+setopt autopushd pushdminus pushdsilent pushdtohome
+setopt cdablevars
+setopt noclobber
+setopt nohup
+setopt notify
+
+# git ^~{} escaping
+fpath=($DOTFILES/zshfuncs $fpath)
+fpath=(${HOME}/.zsh_functions $fpath)
+autoload -Uz git-escape-magic
+git-escape-magic
+
+# http://www.zsh.org/mla/users/2011/msg00531.html
+zstyle ':completion:*' rehash true
+
+fignore=( .o \~ .bak )
+
+alias aptitude='nocorrect aptitude'
+alias knife='nocorrect knife'
+alias qri='noglob qri'
+alias sudo='nocorrect sudo'
+alias yri='noglob yri'
+alias h='fc -liD'
+alias hs='h 1 | grep'
+
+# Append sessions history into $HISTFILE, read other's history.
+sync_history() {
+  fc -AI
+  fc -RI
+}
+
+# Every 60 second sync history. It is executed after a cmd, before prompt shows
+#PERIOD=60
+#periodic() {
+  #sync_history
+#}
+
+sumtime() {
+  awk -v p=$1 '
+    function printtime(label, seconds) {
+      printf "%s: %dm%02ds\n", label, int(seconds/60), seconds % 60
+    }
+    BEGIN {};
+    {
+      if (p) print;
+      split($4,t,":");
+      seconds = t[1] * 60 + t[2];
+      sum += seconds;
+      bycmd[$5] += seconds
+    };
+    END {
+      printtime("Total", sum)
+      for (cmd in bycmd) {
+        time = bycmd[cmd]
+        if (time >= 5) {
+          printtime(cmd, time)
+        }
+      }
+    }'
+}
+
+wastedtime() {
+  h 1 | sumtime | sort -k2 -n
+}
+
+# global aliases
+alias -g ...='../..'
+alias -g ....='../../..'
+alias -g .....='../../../..'
+alias -g A='| a -i'
+alias -g G='| egrep'
+alias -g H='| head'
+alias -g L='| less'
+alias -g DN="/dev/null"
+alias -g 2DN="2> /dev/null"
+alias -g SH='| sort -h'
+alias -g SN='| sort -n'
+alias -g X='| xargs'
+
+# file type aliases
+alias -s html=vim
+alias -s java=vim
+alias -s xml=vim
+alias -s cc=vim
+alias -s h=vim
+
+# Are there any package to upgrade on arch?
+upgrades() {
+  if (( ! $+commands[pacman] )); then return; fi
+  if [[ `pacman -Sup | grep "nothing to do" | wc -l` > 0 ]]; then
+    return
+  fi
+  local package_no
+  package_no=`pacman -Sup | wc -l`
+  echo There are $fg[red]$((package_no-1))$fg[default] packages to upgrade
+}
+
+# notify mechanism
+# gnome
+if (( $+commands[notify-send] )); then
+  __notify() {
+    notify-send -i "$3" -u low "$1" "$2"
+  }
+# mac
+elif (( $+commands[growlnotify] )); then
+  __notify() {
+    growlnotify -m "$2" "$1"
+  }
+elif (( $+commands[terminal-notifier] )); then
+  __notify() {
+    # TODO(rkj): stuck for some reason
+    # terminal-notifier -message "$2" -title "$1"
+  }
+else
+  echo "No notification mechanism found :/"
+  __notify() {
+  }
+fi
+
+PING() {
+  __notify "$@"
+}
+
+echo_free() {
+  df -k "$1" |\
+    tail -1 |\
+    awk -v yellow=$fg[yellow] -v regular=$fg[default] '{
+      G=1025*1024;
+      printf "Free %-25s [%-9s]: %s%6.1fGiB / %6.1fGiB (%3.1f%%)%s\n",
+                    $6, $1, yellow, $4/G, ($3+$4)/G, 100-$5, regular
+    }'
+}
+
+rkj_retcode() {
+  code=$?
+  lastcmd=`fc -l -1 | cut -c 8-`
+  icon=/usr/share/icons/gnome/32x32/emblems/emblem-default.png;
+  if (( $code != 0 )); then icon=/usr/share/icons/gnome/32x32/status/error.png; fi
+  __notify "$lastcmd" "$code" "$icon"
+}
+
+fail_mail_subject() {
+ echo "Failed"
+}
+
+FAILMAIL() {
+  local cmd="$1"
+  shift
+  local tmp=$(mktemp)
+  "$cmd" "$@" |& tee "${tmp}"
+  if [ ${pipestatus[1]} -ne 0 ]; then
+    subject="[$(fail_mail_subject)] $cmd $@"
+    mail -s "$subject" "${MYEMAIL}" <${tmp}
+  fi
+  rm "${tmp}"
+}
+
+cdpath=(. ~/Projects ~/Desktop ~/DropBox ~/misc)
+
+rkj_debug "Executing DOTFILES/includes/zshrc-drives"
+if hash timeout 2>/dev/null; then
+  for mnt in `timeout 1 df | grep /dev/ | awk '{print $6}'`; do
+    echo_free $mnt;
+  done
+else
+  echo "Please install coreutils package to get timeout command"
+fi
+echo -ne "Today is "; date
+echo -ne "Uptime: "; uptime
+echo
+command fortune 2>/dev/null || echo "Missing fortune"
+
+
+rkj_debug "Executing DOTFILES/includes/zshrc-rvm"
+[[ -s "$HOME/.rvm/scripts/rvm" ]] && . "$HOME/.rvm/scripts/rvm"
+
+[ -n "$DISPLAY" -a "$TERM" = "xterm" ] && export TERM=xterm-256color
+[ -n "$DISPLAY" -a "$TERM" = "screen" ] && export TERM=screen-256color
+
+# OPAM configuration
+[[ -s "${HOME}/.opam/opam-init/init.zsh" ]] && source ${HOME}/.opam/opam-init/init.zsh > /dev/null 2> /dev/null
+
+rkj_debug "Executing DOTFILES/includes/zshrc-tmux"
+if [[ -z $TMUX ]]; then
+  echo "$fg[red]Press enter to enter tmux, or CTRL+C/wait 5 seconds for a regular shell$fg[default]"
+  read -t 5 && tmux attach && exit
+fi

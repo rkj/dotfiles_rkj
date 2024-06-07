@@ -1,0 +1,13 @@
+.*\.swp
+.*\.pyc
+.*~
+.*\.zwc
+
+syntax: glob
+.DS_Store
+.un~
+.directory
+.gitignore
+.git
+.tmp/
+

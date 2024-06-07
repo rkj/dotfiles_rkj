@@ -1,0 +1,11 @@
+#guard 'bundler' do
+  #watch('Gemfile')
+#end
+
+guard 'shell' do
+  # builds latex file to pdf and hides output
+  watch(/.*.tex/) do |m|
+    `pdflatex #{m} 1>/dev/null`
+    puts "built #{m}"
+  end
+end
