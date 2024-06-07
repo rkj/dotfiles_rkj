@@ -6,7 +6,10 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
 fi
 
 DISABLE_AUTO_UPDATE="true"
-plugins=(colorize debian golang rsync web-search zsh-autosuggestions zsh-syntax-highlighting)
+source $DOTFILES/zplug/init.zsh
+plugins=(colorize debian golang rsync web-search zsh-autosuggestions zsh-syntax-highlighting async)
+zplug "mafredri/zsh-async", from:"github", use:"async.zsh"
+
 ZSH=$DOTFILES/oh-my-zsh
 ZSH_THEME="rkj"
 ZSH_THEME="powerlevel10k/powerlevel10k"

@@ -115,3 +115,6 @@
 [submodule "vim/plugged/vim-lsc-dart"]
 	path = vim/plugged/vim-lsc-dart
 	url = https://github.com/natebosch/vim-lsc-dart.git
+[submodule "zplug"]
+	path = zplug
+	url = https://github.com/zplug/zplug
