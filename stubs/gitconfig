@@ -1,5 +1,5 @@
 [include]
-  path = /path/to/dotfiles/includes/gitconfig
+  path = ~/misc/dotfiles_rkj/includes/gitconfig
 # any customizations below
 [user]
 
