@@ -149,9 +149,9 @@ if (( $+commands[notify-send] )); then
     notify-send -i "$3" -u low "$1" "$2"
   }
 # mac
-elif (( $+commands[growlnotify] )); then
+elif (( $+commands[osascript] )); then
   __notify() {
-    growlnotify -m "$2" "$1"
+    display notification "$2" with title "$1"
   }
 elif (( $+commands[terminal-notifier] )); then
   __notify() {
