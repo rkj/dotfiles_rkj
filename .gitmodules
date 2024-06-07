@@ -100,3 +100,18 @@
 [submodule "t"]
 	path = t
 	url = https://github.com/michaelaye/t.git
+[submodule "vim/plugged/ultisnips"]
+	path = vim/plugged/ultisnips
+	url = https://github.com/SirVer/ultisnips.git
+[submodule "vim/plugged/vim-lsc"]
+	path = vim/plugged/vim-lsc
+	url = https://github.com/natebosch/vim-lsc.git
+[submodule "vim/plugged/dartlang-snippets"]
+	path = vim/plugged/dartlang-snippets
+	url = https://github.com/natebosch/dartlang-snippets.git
+[submodule "vim/plugged/dart-vim-plugin"]
+	path = vim/plugged/dart-vim-plugin
+	url = https://github.com/dart-lang/dart-vim-plugin.git
+[submodule "vim/plugged/vim-lsc-dart"]
+	path = vim/plugged/vim-lsc-dart
+	url = https://github.com/natebosch/vim-lsc-dart.git
