@@ -18,7 +18,7 @@
 	url = https://github.com/sjl/gundo.vim.git
 [submodule "links/vim/bundle/linediff"]
 	path = links/vim/bundle/linediff
-	url = git://github.com/AndrewRadev/linediff.vim.git
+	url = https://github.com/AndrewRadev/linediff.vim.git
 [submodule "links/vim/bundle/localvimrc"]
 	path = links/vim/bundle/localvimrc
 	url = https://github.com/vim-scripts/localvimrc.git

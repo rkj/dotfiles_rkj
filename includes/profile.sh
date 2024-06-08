@@ -191,7 +191,7 @@ if [ ! -z "$SSH_AUTH_SOCK" -a "$SSH_AUTH_SOCK" != "$HOME/.ssh/agent_sock" ] ; th
     export SSH_AUTH_SOCK="$HOME/.ssh/agent_sock"
 fi
 
-for p in $HOME/.profiles/*.sh; do
-  source $p
-done
+#for p in $HOME/.profiles/*.sh; do
+#  source $p
+#done
 

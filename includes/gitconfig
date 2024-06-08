@@ -1,6 +1,7 @@
 [user]
   name  = Roman Kamyk
-  email = roman.kamyk@gmail.com
+  email = roman@kamyk.me
+  signingkey = ~/.ssh/id_ed25519.pub
 
 [gpg]
 	format = ssh
