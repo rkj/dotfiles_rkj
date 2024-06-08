@@ -25,7 +25,7 @@ for link in links/*; do
   ln -nfs $root/$link $HOME/.$file
 done;
 [ ! -e $HOME/.xmonad/xmonad.hs ] && mkdir -p $HOME/.xmonad && ln -nfs $root/xmonad.hs $HOME/.xmonad/xmonad.hs
-mkdir -p vim/tmp vim/backup vim/cache
+mkdir -p links/vim/tmp links/vim/backup links/vim/cache
 
 # Prepare profile if needed.
 if [ ! -e $HOME/.profile ]; then
