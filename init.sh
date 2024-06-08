@@ -3,7 +3,7 @@
 # to the newest version and create any new stubs.
 
 # Find proper path
-root=`dirname "$PWD"/"$0"`/
+root="$(cd "$(dirname "$0")" && pwd)"
 cd $root
 root=`pwd`
 
@@ -20,7 +20,7 @@ for stub in stubs/*; do
 done;
 
 # Update symlinks.
-for link in links/**/* vim; do
+for link in links/*; do
   file=`basename $link`
   ln -nfs $root/$link $HOME/.$file
 done;

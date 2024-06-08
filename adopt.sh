@@ -1,8 +1,8 @@
 #!/bin/zsh
 
-root=~/misc/dotfiles_corp/links
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+root="$SCRIPT_DIR/links"
 filename=$(basename "$1")
-echo $filename
 # Verify if the file exists and starts with a dot
 if [[ ! -f "$HOME/$filename" || ! "$filename" =~ ^\. ]]; then
     echo "Error: File not found or does not start with a dot."
