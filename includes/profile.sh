@@ -180,6 +180,10 @@ nectarine() {
   mpv --player-operation-mode=pseudo-gui -- http://necta-v6.burn.net:8000/nectarine
 }
 
+print_colors() {
+  for i in {0..255}; do print -Pn "%K{$i}  %k%F{$i}${(l:3::0:)i}%f " ${${(M)$((i%6)):#3}:+$'\n'}; done
+}
+
 # fix for tmux/screen attaching and lossing ssh agent
 if [ ! -z "$SSH_AUTH_SOCK" -a "$SSH_AUTH_SOCK" != "$HOME/.ssh/agent_sock" ] ; then
     unlink "$HOME/.ssh/agent_sock" 2>/dev/null
