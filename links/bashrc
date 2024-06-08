@@ -1,8 +1,3 @@
 export HISTFILESIZE=10000
 export HISTCONTROL=ignoreboth
 
-# ProfileGem - go/google.gem
-# To uninstall delete the following line and rm ~/ProfileGem. If you're removing
-# google.gem permanently please fill out go/google.gem-feedback before you go!
-source '/usr/local/google/home/rkj/ProfileGem/load.sh'
-. "$HOME/.cargo/env"
