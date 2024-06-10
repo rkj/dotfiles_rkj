@@ -198,7 +198,7 @@ FAILMAIL() {
 cdpath=(. ~/Projects ~/Desktop ~/DropBox ~/misc)
 
 [[ -e ~/.oh-my-zsh/custom/*.zsh ]] && source ~/.oh-my-zsh/custom/*.zsh
-[[ -e ~/.profiles/*.zsh ]] && source ~/.profiles/*.zsh
+[[ -e ~/.profiles ]] && source ~/.profiles/*.zsh
 
 # source $DOTFILES/includes/zsh_echo.zsh
 
