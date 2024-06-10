@@ -49,6 +49,7 @@
 [submodule "links/vim/bundle/vim-colorschemes"]
 	path = links/vim/bundle/vim-colorschemes
 	url = https://github.com/flazz/vim-colorschemes
+  ignore = dirty
 [submodule "links/vim/bundle/vim-easymotion"]
 	path = links/vim/bundle/vim-easymotion
 	url = https://github.com/Lokaltog/vim-easymotion.git
