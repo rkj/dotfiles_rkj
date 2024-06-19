@@ -191,5 +191,5 @@ if [ ! -z "$SSH_AUTH_SOCK" -a "$SSH_AUTH_SOCK" != "$HOME/.ssh/agent_sock" ] ; th
     export SSH_AUTH_SOCK="$HOME/.ssh/agent_sock"
 fi
 
-compgen -G "$HOME/.profiles/*.sh" >/dev/null && source <(cat ~/.profiles/*.sh)
+source <(cat ~/.profiles/*.sh)
 
