@@ -80,9 +80,6 @@
 [submodule "links/vim/bundle/vim-ruby"]
 	path = links/vim/bundle/vim-ruby
 	url = https://github.com/vim-ruby/vim-ruby.git
-[submodule "links/vim/bundle/vim-ruby-debugger"]
-	path = links/vim/bundle/vim-ruby-debugger
-	url = https://github.com/stephenprater/vim-ruby-debugger.git
 [submodule "links/vim/bundle/vim-scala"]
 	path = links/vim/bundle/vim-scala
 	url = https://github.com/derekwyatt/vim-scala.git
