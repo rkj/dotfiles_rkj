@@ -119,3 +119,12 @@
 [submodule "z"]
 	path = z
 	url = https://github.com/rupa/z.git
+[submodule "links/oh-my-zsh/custom/plugins/zsh-autosuggestions"]
+	path = links/oh-my-zsh/custom/plugins/zsh-autosuggestions
+	url = https://github.com/zsh-users/zsh-autosuggestions
+[submodule "links/oh-my-zsh/custom/plugins/zsh-syntax-highlighting"]
+	path = links/oh-my-zsh/custom/plugins/zsh-syntax-highlighting
+	url = https://github.com/zsh-users/zsh-syntax-highlighting.git
+[submodule "links/oh-my-zsh/custom/themes/powerlevel10k"]
+	path = links/oh-my-zsh/custom/themes/powerlevel10k
+	url = https://github.com/romkatv/powerlevel10k.git
