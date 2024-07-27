@@ -15,6 +15,7 @@ rkj_debug "Executing DOTFILES/includes/zshrc-oh-my-zsh"
 source $ZSH/oh-my-zsh.sh
 
 zstyle ':completion:*:functions' ignored-patterns '_*'
+setopt incappendhistory
 
 # fix stupid oh-my-zsh tweaks
 export LESS="FRX"
