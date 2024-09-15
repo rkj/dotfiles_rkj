@@ -1,3 +1,4 @@
 #/bin/sh
 
-sudo apt install exuberant-ctags zsh
+sudo apt install exuberant-ctags zsh tmux
+
