@@ -6,11 +6,16 @@ ZSH=$DOTFILES/oh-my-zsh
 ZSH_CUSTOM=$HOME/.oh-my-zsh/custom
 ZSH_THEME="rkj"
 ZSH_THEME="powerlevel10k/powerlevel10k"
+
 function rkj_vcs_info() {} # no vcs info
 echoerr() { echo "$@" 1>&2; }
 rkj_debug() {
   $ZSH_DEBUG && echoerr "$(date +%H:%m:%S).$(($(date +%N)/1000000))" "$@"
 }
+
+mkdir -p /tmp/gistatus_cache
+export GITSTATUS_DIR=/tmp/gitstatus_cache
+
 rkj_debug "Executing DOTFILES/includes/zshrc-oh-my-zsh"
 source $ZSH/oh-my-zsh.sh
 

@@ -170,6 +170,9 @@ set undodir=~/.vim/tmp
 "vimdiff
 set diffopt=filler,iwhite,vertical
 
+" Select blocks by default
+noremap v <c-v>
+
 " copy to clipboard
 inoremap <F8> <ESC>1GvG"+y
 nnoremap <F8> 1GvG"+y

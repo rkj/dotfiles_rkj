@@ -203,5 +203,13 @@ countdown() {
   done
 }
 
+swarm_exec() {
+  local service_name="$1"
+  local exec_command="${2:-/bin/sh}"
+  local node=$(docker service ps -f "desired-state=running" --format "{{.Node}}" "$service_name" | head -n1)
+  local container_id=$(ssh "$node" "docker ps -q -f name=$service_name")
+  ssh -t "$node" "docker exec -it $container_id $exec_command"
+}
+
 source <(cat ~/.profiles/*.sh)
 
