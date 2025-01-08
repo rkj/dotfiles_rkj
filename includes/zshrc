@@ -219,8 +219,8 @@ rkj_debug "Executing DOTFILES/includes/zshrc-rvm"
 [[ -s "${HOME}/.opam/opam-init/init.zsh" ]] && source ${HOME}/.opam/opam-init/init.zsh > /dev/null 2> /dev/null
 
 rkj_debug "Executing DOTFILES/includes/zshrc-tmux"
-if [[ -z $TMUX ]]; then
-  echo "$fg[red]Press enter to enter tmux, or CTRL+C/wait 5 seconds for a regular shell$fg[default]"
-  read -t 5 && tmux attach && exit
-fi
+#if [[ -z $TMUX ]]; then
+#  echo "$fg[red]Press enter to enter tmux, or CTRL+C/wait 5 seconds for a regular shell$fg[default]"
+#  read -t 5 && tmux attach && exit
+#fi
 

@@ -49,6 +49,8 @@
   view3        = !"gitk"
   view4        = !"tig"
 
+  clone-recurse = "!f() { git clone --recurse-submodules \"$@\"; }; f"
+
 [apply]
   whitespace = strip
 
@@ -85,3 +87,4 @@
 
 [submodule]
 	recurse = true
+
