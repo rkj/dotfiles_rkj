@@ -1,12 +1,13 @@
 syntax: glob
 .VimballRecord
 links/vim/*/*/*/tags
-links/vim/yankring_history_v2.txt
 links/vim/.netrwhist
 links/vim/backup
-links/vim/tmp
 links/vim/cache
 links/vim/data
 links/vim/eclim
 links/vim/spell
+links/vim/tmp
+links/vim/yankring_history_v2.txt
+manual_links/fish/fish_variables
 
