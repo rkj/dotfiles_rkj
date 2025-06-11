@@ -118,7 +118,7 @@ nnoremap <leader>q gqip
 nnoremap <leader>v V`]
 " edit VIMRC
 nnoremap <leader>ev <C-w>s<C-w>j:e $MYVIMRC<cr>
-inoremap jj <ESC>
+" inoremap jj <ESC>
 inoremap kk <ESC>
 " F1 -> ESC
 inoremap <F1> <ESC>
