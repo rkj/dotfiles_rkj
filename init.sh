@@ -45,3 +45,16 @@ to your .profile if you haven't already.
 EOQ
 fi
 
+# Prepare bashrc if needed.
+if [ ! -e $HOME/.bashrc ]; then
+  echo 'source $DOTFILES/includes/bashrc'  >> $HOME/.bashrc
+else
+  cat <<EOQ
+Remember to add:
+
+source \$DOTFILES/includes/bashrc
+
+to your .bashrc if you haven't already.
+EOQ
+fi
+
