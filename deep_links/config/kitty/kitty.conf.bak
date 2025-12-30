@@ -1,0 +1,9 @@
+alt_send_esc yes
+confirm_os_window_close 0
+
+
+
+# BEGIN_KITTY_THEME
+# C64
+include current-theme.conf
+# END_KITTY_THEME

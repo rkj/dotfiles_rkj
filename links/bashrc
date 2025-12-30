@@ -15,3 +15,9 @@ fi
 if [ -f /etc/bash_completion ] && ! shopt -oq posix; then
   . /etc/bash_completion
 fi
+
+export PROMPT_COMMAND=
+
+# Added by Jetski
+export PATH="/Users/rkj/.jetski/jetski/bin:$PATH"
+
