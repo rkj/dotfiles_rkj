@@ -9,6 +9,7 @@ links/vim/eclim
 links/vim/spell
 links/vim/tmp
 links/vim/yankring_history_v2.txt
-manual_links/fish/config.fish
-manual_links/fish/fish_variables
+manual_links/config/fish/config.fish
+manual_links/config/fish/fish_variables
+manual_links/config/fish/fish_variables
 
