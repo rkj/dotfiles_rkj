@@ -5,3 +5,5 @@
 .hgignore
 *.beam
 tags
+.beads
+
