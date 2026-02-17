@@ -30,7 +30,6 @@ alias port='sudo port'
 alias sp="source ~/.profile"
 alias sudo='sudo -E'
 alias sz="source ~/.zshrc"
-alias td='python $DOTFILES/t/t.py --task-dir ~/Dropbox/tasks --list tasks'
 alias v='l --color=none'
 alias grep="grep --line-number --color"
 

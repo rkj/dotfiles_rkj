@@ -1,17 +1,9 @@
 filetype off
-runtime bundle/vim-pathogen/autoload/pathogen.vim
-call pathogen#infect()
-call pathogen#helptags()
 filetype plugin indent on
 
 let g:LargeFile=10
 
-" colorscheme desert " highlight (red for spell) is bad
-" colorscheme desert256
-" colorscheme 256-grayvim
-" colorscheme eclm_wombat
-" colorscheme native
-colorscheme zenburn
+colorscheme desert
 if has('gui_running')
   colorscheme solarized
 end
@@ -109,7 +101,6 @@ nnoremap <leader>W :%s/\s\+$//<cr>:let @/=''<CR>
 " Remove trailing whitespace
 nnoremap <leader>rw :%s/\s\+$//<CR>
 
-nnoremap <leader>a :Ack
 " select last paste
 nnoremap <leader>ft Vatzf
 " format paragraph
@@ -118,23 +109,11 @@ nnoremap <leader>q gqip
 nnoremap <leader>v V`]
 " edit VIMRC
 nnoremap <leader>ev <C-w>s<C-w>j:e $MYVIMRC<cr>
-" inoremap jj <ESC>
 inoremap kk <ESC>
 " F1 -> ESC
 inoremap <F1> <ESC>
 nnoremap <F1> <ESC>
 vnoremap <F1> <ESC>
-
-nnoremap <F2> :NERDTree .<CR>
-
-" YankRing
-nnoremap <silent> <F3> :YRShow<cr>
-inoremap <silent> <F3> <ESC>:YRShow<cr>
-let g:yankring_history_dir = '$HOME/.vim'
-
-" Taglist
-nnoremap <silent> <F4> :TlistToggle<CR>
-inoremap <silent> <F4> <ESC>:TlistToggle<CR>
 
 " paste system clipboard
 nnoremap <leader>p "+gp
@@ -144,22 +123,14 @@ inoremap <silent> <F6> <ESC>:make<cr>
 
 " Undo
 nnoremap <leader>u :undolist<cr>
-nnoremap <F5> :GundoToggle<CR>
-inoremap <F5> :GundoToggle<CR>
 
 " ctags
 nnoremap <leader>g :tag
 inoremap <F9>:!tags -R .
 nnoremap <F9>:!tags -R .
 
-nnoremap <leader>o :CtrlP<CR>
-let g:ctrlp_working_path_mode = ''
-
 " also used by ctrlP
 set wildignore+=*.o,*.obj,*.git,tmp,log,_site,doc,*.pyc
-
-"localvimrc
-let g:localvimrc_ask=0
 
 "backup
 set backup
@@ -197,16 +168,3 @@ cabbrev q <c-r>=(getcmdtype()==':' && getcmdpos()==1 ? 'close' : 'q')<CR>
 
 " http://vim.wikia.com/wiki/Search_for_visually_selected_text
 vnoremap // y/<C-R>"<CR>
-
-" https://github.com/junegunn/vim-plug
-call plug#begin()
-Plug 'https://github.com/dart-lang/dart-vim-plugin.git'
-Plug 'https://github.com/natebosch/vim-lsc.git'
-Plug 'https://github.com/natebosch/vim-lsc-dart.git'
-" Plug 'https://github.com/SirVer/ultisnips.git'
-" Plug 'https://github.com/natebosch/dartlang-snippets.git'
-call plug#end()
-
-let g:lsc_auto_map = v:true
-
-
