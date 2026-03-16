@@ -5,4 +5,5 @@
 .hgignore
 *.beam
 tags
+.debugging
 
