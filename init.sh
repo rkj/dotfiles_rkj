@@ -7,8 +7,6 @@ root="$(cd "$(dirname "$0")" && pwd)"
 cd $root
 root=`pwd`
 
-git submodule update --init --recursive
-
 # Make stub files.
 for stub in stubs/*; do
   file=`basename $stub`
@@ -19,12 +17,18 @@ for stub in stubs/*; do
   fi
 done;
 
-# Update symlinks.
+# Update symlinks for dotfiles (links/ -> ~/.<name>)
 for link in links/*; do
   file=`basename $link`
   ln -nfs $root/$link $HOME/.$file
 done;
-ln -nfs $root/manual_links/fish $HOME/.config/fish
+
+# Update ~/.config symlinks (config/<name> -> ~/.config/<name>)
+mkdir -p $HOME/.config
+for cfg in $root/config/*/; do
+  name=$(basename "$cfg")
+  ln -nfs "$cfg" "$HOME/.config/$name"
+done
 
 [ ! -e $HOME/.xmonad/xmonad.hs ] && mkdir -p $HOME/.xmonad && ln -nfs $root/xmonad.hs $HOME/.xmonad/xmonad.hs
 mkdir -p links/vim/tmp links/vim/backup links/vim/cache $HOME/.profiles/
@@ -57,4 +61,3 @@ source \$DOTFILES/includes/bashrc
 to your .bashrc if you haven't already.
 EOQ
 fi
-
