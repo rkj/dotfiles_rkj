@@ -6,4 +6,5 @@
 *.beam
 tags
 .debugging
+.commit_msg
 

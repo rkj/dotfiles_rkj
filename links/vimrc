@@ -168,3 +168,9 @@ cabbrev q <c-r>=(getcmdtype()==':' && getcmdpos()==1 ? 'close' : 'q')<CR>
 
 " http://vim.wikia.com/wiki/Search_for_visually_selected_text
 vnoremap // y/<C-R>"<CR>
+
+set clipboard=unnamed,unnamedplus
+packadd osc52
+set clipmethod+=osc52
+let g:osc52_force_avail = v:true
+
