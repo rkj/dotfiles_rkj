@@ -1,9 +1,7 @@
 [ -z "$PS1" ] && return
-export DOTFILES=$HOME/dotfiles_rkj
+[[ -e $HOME/.profile ]] && source $HOME/.profile
 source $DOTFILES/includes/zsh_first.zsh
 ZSH_DEBUG=false
 #ZSH_DEBUG=true
-[[ -e $HOME/.profile ]] && source $HOME/.profile
 source $DOTFILES/includes/zshrc
 source $DOTFILES/includes/zsh_last.zsh
-

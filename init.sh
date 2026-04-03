@@ -49,6 +49,20 @@ to your .profile if you haven't already.
 EOQ
 fi
 
+# Prepare bash_profile if needed.
+if [ ! -e $HOME/.bash_profile ]; then
+  cp "$root/stubs/bash_profile" "$HOME/.bash_profile"
+else
+  cat <<EOQ
+Remember to ensure your .bash_profile sources:
+
+~/.profile
+~/.bashrc
+
+in that order, otherwise DOTFILES may be unset in bash sessions.
+EOQ
+fi
+
 # Prepare bashrc if needed.
 if [ ! -e $HOME/.bashrc ]; then
   echo 'source $DOTFILES/includes/bashrc'  >> $HOME/.bashrc
@@ -59,5 +73,19 @@ Remember to add:
 source \$DOTFILES/includes/bashrc
 
 to your .bashrc if you haven't already.
+EOQ
+fi
+
+# Prepare tmux.conf if needed.
+if [ ! -e $HOME/.tmux.conf ]; then
+  cp "$root/stubs/tmux.conf" "$HOME/.tmux.conf"
+else
+  cat <<EOQ
+Remember to ensure your .tmux.conf sources:
+
+run-shell '[ -n "\$DOTFILES" ] && [ -f "\$DOTFILES/includes/tmux.conf" ] && tmux source-file "\$DOTFILES/includes/tmux.conf"'
+
+tmux does not expand shell variables in config files directly, so DOTFILES must be
+available in the environment when the tmux server starts.
 EOQ
 fi
