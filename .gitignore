@@ -1,1 +1,4 @@
 syntax: glob
+
+config/fish/fish_variables
+config/fish/config.fish

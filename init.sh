@@ -31,7 +31,7 @@ for cfg in $root/config/*/; do
 done
 
 [ ! -e $HOME/.xmonad/xmonad.hs ] && mkdir -p $HOME/.xmonad && ln -nfs $root/xmonad.hs $HOME/.xmonad/xmonad.hs
-mkdir -p links/vim/tmp links/vim/backup links/vim/cache $HOME/.profiles/
+mkdir -p $HOME/.profiles/
 touch $HOME/.profiles/empty.sh
 
 # Prepare profile if needed.
