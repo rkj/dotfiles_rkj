@@ -1,0 +1,13 @@
+# Shared environment variables (POSIX syntax)
+export EDITOR=hx
+export LESS="FRX"
+export LC_TIME="en_GB.UTF-8"
+export GOPATH=$HOME/local/gocode
+export P4CONFIG=.p4config
+export P4DIFF='colordiff'
+export P4EDITOR=$EDITOR
+export P4IGNORE=$HOME/.p4ignore
+export G4PENDINGSTYLE=relativepath
+export G4RECONCILEADDS=1
+export GOOGLE_USE_CORP_SSL_AGENT=true
+export MYEMAIL='rkj@google.com'

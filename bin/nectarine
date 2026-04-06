@@ -1,0 +1,2 @@
+#!/usr/bin/env bash
+exec mpv --player-operation-mode=pseudo-gui -- http://necta-v6.burn.net:8000/nectarine

@@ -1,0 +1,2 @@
+#!/usr/bin/env bash
+ping "$@" | awk '{ sent=NR-1; received+=/^.*(time=.+ ms).*$/; loss=0; } { if (sent>0) loss=100-((received/sent)*100) } { print $0; printf "sent:%d received:%d loss:%d%%\n", sent, received, loss; }'
