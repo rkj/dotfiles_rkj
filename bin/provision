@@ -1,0 +1,141 @@
+#!/usr/bin/env bash
+# --- RKJ System Provisioner ---
+# Modular, Rule-Based, and Lightweight.
+
+set -e
+
+# --- Configuration ---
+AUTO_CONFIRM=false
+if [[ "$1" == "-y" ]]; then AUTO_CONFIRM=true; fi
+
+# --- Detection ---
+IS_WORK=false
+if [[ "$MYEMAIL" == *"@google.com" ]] || [[ -d /google ]]; then IS_WORK=true; fi
+
+IS_BAZZITE=false
+if [[ -f /etc/os-release ]] && grep -q "Bazzite" /etc/os-release; then IS_BAZZITE=true; fi
+
+echo "Context: [Work: $IS_WORK] [Bazzite: $IS_BAZZITE]"
+
+# --- Rule-Based Providers ---
+function confirm_install() {
+    local name="$1"
+    if [ "$AUTO_CONFIRM" = true ]; then return 0; fi
+    read -p "Install $name? [y/N] " -n 1 -r
+    echo
+    [[ $REPLY =~ ^[Yy]$ ]]
+}
+
+function try_install() {
+    local tool="$1"
+    local bin_name="${2:-$tool}"
+
+    if command -v "$bin_name" >/dev/null; then
+        echo "✓ $tool is already installed."
+        return 0
+    fi
+
+    if ! confirm_install "$tool"; then
+        echo "Skipping $tool."
+        return 0
+    fi
+
+    # Define Provider Order
+    local providers=()
+    if [ "$IS_BAZZITE" = true ]; then
+        providers=("brew" "dnf" "ostree")
+    else
+        providers=("apt" "brew")
+    fi
+
+    for p in "${providers[@]}"; do
+        case $p in
+            brew)
+                if command -v brew >/dev/null; then
+                    echo "Trying Brew for $tool..."
+                    if brew install "$tool" 2>/dev/null; then return 0; fi
+                fi
+                ;;
+            apt)
+                if command -v apt-get >/dev/null; then
+                    echo "Trying APT for $tool..."
+                    # Remap for APT
+                    local apt_tool="$tool"
+                    [[ "$tool" == "fd" ]] && apt_tool="fd-find"
+                    [[ "$tool" == "bat" ]] && apt_tool="bat"
+                    if sudo apt-get install -y "$apt_tool" 2>/dev/null; then return 0; fi
+                fi
+                ;;
+            dnf)
+                # For Bazzite, usually inside a toolbox/distrobox
+                if command -v dnf >/dev/null; then
+                    echo "Trying DNF for $tool..."
+                    if sudo dnf install -y "$tool" 2>/dev/null; then return 0; fi
+                fi
+                ;;
+            ostree)
+                if command -v rpm-ostree >/dev/null; then
+                    echo "Trying rpm-ostree for $tool (Layering)..."
+                    if sudo rpm-ostree install "$tool"; then
+                        echo "!!! Reboot required for $tool."
+                        return 0
+                    fi
+                fi
+                ;;
+        esac
+    done
+
+    echo "✗ Failed to install $tool via available providers."
+    return 1
+}
+
+# --- AI Tool Specifics ---
+function install_ai_tools() {
+    # Gemini CLI
+    if ! command -v gemini >/dev/null; then
+        if confirm_install "gemini-cli"; then
+            echo "Installing Gemini CLI..."
+            curl -sSL https://raw.githubusercontent.com/google/gemini-cli/main/install.sh | bash
+        fi
+    fi
+
+    # OpenCode
+    if ! command -v opencode >/dev/null; then
+        if confirm_install "opencode"; then
+            echo "Installing OpenCode..."
+            # Placeholder for opencode install logic
+            # npm install -g @google/opencode
+        fi
+    fi
+
+    # External AI (Home Only)
+    if [ "$IS_WORK" = false ]; then
+        if ! command -v claude >/dev/null; then
+            if confirm_install "claude-code"; then
+                npm install -g @anthropic-ai/claude-code
+            fi
+        fi
+    fi
+}
+
+# --- Main Execution ---
+echo "--- Starting Provisioning ---"
+
+# Core Utilities
+try_install "helix" "hx"
+try_install "mpv"
+try_install "sox"
+try_install "fzf"
+try_install "jq"
+try_install "bat"
+try_install "fd"
+
+# Language Runtimes
+if ! command -v brew >/dev/null && [ "$IS_WORK" = false ]; then
+    echo "Brew not found. Consider installing it first."
+fi
+
+# AI Tools
+install_ai_tools
+
+echo "--- Provisioning Complete ---"
