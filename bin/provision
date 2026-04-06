@@ -9,6 +9,8 @@ AUTO_CONFIRM=false
 if [[ "$1" == "-y" ]]; then AUTO_CONFIRM=true; fi
 
 # --- Detection ---
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
 IS_WORK=false
 if [[ "$MYEMAIL" == *"@google.com" ]] || [[ -d /google ]]; then IS_WORK=true; fi
 
@@ -109,11 +111,9 @@ function install_ai_tools() {
     fi
 
     # External AI (Home Only)
-    if [ "$IS_WORK" = false ]; then
-        if ! command -v claude >/dev/null; then
-            if confirm_install "claude-code"; then
-                npm install -g @anthropic-ai/claude-code
-            fi
+    if ! command -v claude >/dev/null; then
+        if confirm_install "claude-code"; then
+            npm install -g @anthropic-ai/claude-code
         fi
     fi
 }
@@ -136,6 +136,14 @@ if ! command -v brew >/dev/null && [ "$IS_WORK" = false ]; then
 fi
 
 # AI Tools
-install_ai_tools
+if [ "$IS_WORK" = false ]; then
+    install_ai_tools
+fi
+
+# Visual Theme (Fish/Tide)
+if command -v fish >/dev/null && [ -f "$SCRIPT_DIR/apply-tide-theme.fish" ]; then
+    echo "Applying Tide Theme..."
+    fish "$SCRIPT_DIR/apply-tide-theme.fish"
+fi
 
 echo "--- Provisioning Complete ---"

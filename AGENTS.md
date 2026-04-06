@@ -7,6 +7,7 @@ All CLI tools and system packages MUST be managed via the `provision` script (`~
 
 - **Adding a Tool:** Update the `TOOLS` list in the `provision` script. 
 - **Renaming:** Use the `REMAP` logic for tools that have different names across package managers (e.g., `fd` vs `fd-find`).
+- **Visual Theme:** Prompt and shell aesthetics are managed by `~/dotfiles/personal/bin/apply-tide-theme.fish`. This script is called automatically by `provision`.
 - **System Preference:** 
     - **Bazzite:** Prefer `brew` or user-space managers. Avoid `rpm-ostree` layering.
     - **Goobuntu/Ubuntu:** Prefer `apt` for core tools, `brew` for modern CLI replacements.
