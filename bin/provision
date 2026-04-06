@@ -123,6 +123,9 @@ echo "--- Starting Provisioning ---"
 
 # Core Utilities
 try_install "helix" "hx"
+try_install "yazi"
+try_install "btop"
+try_install "ncdu"
 try_install "mpv"
 try_install "sox"
 try_install "fzf"
