@@ -7,6 +7,8 @@ echo "🛡️ Applying Tide Visual Theme..."
 set -U tide_left_prompt_items os context pwd git newline character
 set -U tide_right_prompt_items status cmd_duration jobs direnv node python rustc java php pulumi ruby go gcloud kubectl distrobox toolbox nix_shell crystal elixir zig time
 
+set -U tide_prompt_transient_enabled false
+
 # Context
 set -U tide_context_always_display true
 
