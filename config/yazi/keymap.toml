@@ -2,6 +2,6 @@
 
 [mgr]
 prepend_keymap = [
-    { on = [ "g", "o" ], run = "shell --block '/var/home/rkj/dotfiles/personal/bin/yazi-repo-changes-view stack'", desc = "Show repo changes vs trunk" },
-    { on = [ "g", "O" ], run = "shell --block '/var/home/rkj/dotfiles/personal/bin/yazi-repo-changes-view parent'", desc = "Show repo changes vs parent" },
+    { on = [ "g", "o" ], run = "shell --block '$DOTFILES/bin/yazi-repo-changes-view stack'", desc = "Show repo changes vs trunk" },
+    { on = [ "g", "O" ], run = "shell --block '$DOTFILES/bin/yazi-repo-changes-view parent'", desc = "Show repo changes vs parent" },
 ]
