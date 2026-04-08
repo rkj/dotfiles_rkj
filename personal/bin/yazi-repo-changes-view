@@ -1,0 +1,144 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+usage() {
+    cat <<'EOF'
+Usage: yazi-repo-changes-view <stack|parent>
+
+Build a temporary tree containing the changed files for the current repository and:
+- print its path when run outside Yazi
+- switch the current Yazi instance to that tree when run inside Yazi
+
+Environment:
+- YAZI_JJ_BASE_REV: base revision for Jujutsu stack mode (default: main)
+EOF
+}
+
+die() {
+    echo "yazi-repo-changes-view: $*" >&2
+    exit 1
+}
+
+have() {
+    command -v "$1" >/dev/null 2>&1
+}
+
+mode="${1:-}"
+case "$mode" in
+    stack|parent) ;;
+    -h|--help|"")
+        usage
+        exit 0
+        ;;
+    *)
+        die "unknown mode: $mode"
+        ;;
+esac
+
+cwd="${PWD}"
+repo_root=""
+vcs=""
+
+if have jj; then
+    if repo_root="$(cd "$cwd" && jj root 2>/dev/null)"; then
+        vcs="jj"
+    fi
+fi
+
+if [[ -z "$vcs" ]]; then
+    if repo_root="$(git -C "$cwd" rev-parse --show-toplevel 2>/dev/null)"; then
+        vcs="git"
+    else
+        die "not inside a Git or Jujutsu repository"
+    fi
+fi
+
+git_base_ref() {
+    if git -C "$repo_root" symbolic-ref --quiet --short refs/remotes/origin/HEAD >/dev/null 2>&1; then
+        git -C "$repo_root" symbolic-ref --quiet --short refs/remotes/origin/HEAD
+    elif git -C "$repo_root" show-ref --verify --quiet refs/heads/main; then
+        printf '%s\n' "main"
+    elif git -C "$repo_root" show-ref --verify --quiet refs/heads/master; then
+        printf '%s\n' "master"
+    else
+        printf '%s\n' "HEAD"
+    fi
+}
+
+collect_git_paths() {
+    local base_ref merge_base empty_tree
+    base_ref="$(git_base_ref)"
+
+    if [[ "$mode" == "stack" ]]; then
+        merge_base="$(git -C "$repo_root" merge-base HEAD "$base_ref" 2>/dev/null || true)"
+        if [[ -n "$merge_base" ]]; then
+            git -C "$repo_root" diff --name-only --relative "$merge_base"
+        else
+            git -C "$repo_root" diff --name-only --relative HEAD
+        fi
+    else
+        if git -C "$repo_root" rev-parse --verify --quiet HEAD^ >/dev/null; then
+            git -C "$repo_root" diff --name-only --relative HEAD^
+        else
+            empty_tree="$(git -C "$repo_root" hash-object -t tree /dev/null)"
+            git -C "$repo_root" diff --name-only --relative "$empty_tree"
+        fi
+    fi
+
+    git -C "$repo_root" ls-files --others --exclude-standard
+}
+
+collect_jj_paths() {
+    local base_rev
+    base_rev="${YAZI_JJ_BASE_REV:-main}"
+
+    if [[ "$mode" == "stack" ]]; then
+        if ! (cd "$repo_root" && jj diff --from "$base_rev" --name-only); then
+            die "failed to diff from Jujutsu base revision '$base_rev' (override with YAZI_JJ_BASE_REV)"
+        fi
+    else
+        (cd "$repo_root" && jj diff --from "@-" --name-only)
+    fi
+}
+
+mapfile -t changed_paths < <(
+    if [[ "$vcs" == "jj" ]]; then
+        collect_jj_paths
+    else
+        collect_git_paths
+    fi | awk 'NF { print }' | sed 's#^\./##' | sort -u
+)
+
+repo_name="$(basename "$repo_root")"
+repo_hash="$(printf '%s' "$repo_root" | sha1sum | cut -c1-12)"
+preferred_state_root="${XDG_STATE_HOME:-$HOME/.local/state}/yazi/repo-changes/$repo_name-$repo_hash"
+fallback_state_root="/tmp/yazi-repo-changes/$repo_name-$repo_hash"
+state_root="$preferred_state_root"
+
+if ! mkdir -p "$state_root" 2>/dev/null; then
+    state_root="$fallback_state_root"
+    mkdir -p "$state_root"
+fi
+
+view_dir="$(mktemp -d "$state_root/$mode-XXXXXX")"
+
+for rel in "${changed_paths[@]}"; do
+    [[ "$rel" = /* ]] && continue
+    [[ "$rel" == ".." || "$rel" == ../* || "$rel" == */../* ]] && continue
+
+    target="$repo_root/$rel"
+    parent_dir="$view_dir/$(dirname "$rel")"
+    mkdir -p "$parent_dir"
+    ln -s "$target" "$view_dir/$rel"
+done
+
+if [[ -n "${YAZI_ID:-}" ]]; then
+    if ya emit cd "$view_dir"; then
+        exit 0
+    fi
+
+    exec yazi "$view_dir"
+fi
+
+printf '%s\n' "$view_dir"
