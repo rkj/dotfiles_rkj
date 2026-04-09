@@ -1,6 +1,6 @@
 [user]
   name  = Roman Kamyk
-  email = rkj@google.com
+  email = git@kamyk.me
   signingkey = ~/.ssh/id_ed25519.pub
 
 [init]
