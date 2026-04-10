@@ -27,26 +27,28 @@ done;
 mkdir -p $HOME/.config
 for cfg in $root/config/*/; do
   name=$(basename "$cfg")
-  ln -nfs "$cfg" "$HOME/.config/$name"
+  target="$HOME/.config/$name"
+  if [ -d "$target" ] && [ ! -L "$target" ]; then
+    echo "Warning: $target is a directory, backing up to ${target}.bak"
+    mv "$target" "${target}.bak"
+  fi
+  ln -nfs "$cfg" "$target"
 done
 
 [ ! -e $HOME/.xmonad/xmonad.hs ] && mkdir -p $HOME/.xmonad && ln -nfs $root/xmonad.hs $HOME/.xmonad/xmonad.hs
 mkdir -p $HOME/.profiles/
 touch $HOME/.profiles/empty.sh
 
-# Prepare profile if needed.
-if [ ! -e $HOME/.profile ]; then
-  echo "export DOTFILES=$root"                 >  $HOME/.profile
-  echo 'source $DOTFILES/includes/profile.sh'  >> $HOME/.profile
+# Ensure DOTFILES is set in .profile.
+if ! grep -q "^export DOTFILES=" $HOME/.profile 2>/dev/null; then
+  echo ""                                        >> $HOME/.profile
+  echo "export DOTFILES=$root"                   >> $HOME/.profile
+  echo '[ -f $DOTFILES/includes/profile.sh ] && source $DOTFILES/includes/profile.sh'  >> $HOME/.profile
+  echo "Added DOTFILES to ~/.profile"
 else
-  cat <<EOQ
-Remember to add:
-
-export DOTFILES="$root"
-source \$DOTFILES/includes/profile.sh
-
-to your .profile if you haven't already.
-EOQ
+  # Update existing DOTFILES line if path changed.
+  sed -i "s|^export DOTFILES=.*|export DOTFILES=$root|" $HOME/.profile
+  echo "DOTFILES already in ~/.profile (updated path)"
 fi
 
 # Prepare bash_profile if needed.

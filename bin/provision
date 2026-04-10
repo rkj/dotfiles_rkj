@@ -105,8 +105,7 @@ function install_ai_tools() {
     if ! command -v opencode >/dev/null; then
         if confirm_install "opencode"; then
             echo "Installing OpenCode..."
-            # Placeholder for opencode install logic
-            # npm install -g @google/opencode
+            curl -fsSL https://opencode.ai/install | bash
         fi
     fi
 
