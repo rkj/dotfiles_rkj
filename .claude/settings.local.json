@@ -1,7 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(wc -l /home/rkj/dotfiles_rkj/includes/* /home/rkj/dotfiles_rkj/links/*)"
-    ]
-  }
-}
