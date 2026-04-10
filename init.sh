@@ -91,3 +91,7 @@ tmux does not expand shell variables in config files directly, so DOTFILES must 
 available in the environment when the tmux server starts.
 EOQ
 fi
+
+echo ""
+echo "--- Installing tools ---"
+$root/bin/provision

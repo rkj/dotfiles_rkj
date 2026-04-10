@@ -2,22 +2,49 @@
 # --- RKJ System Provisioner ---
 # Modular, Rule-Based, and Lightweight.
 
-set -e
+set -euo pipefail
 
 # --- Configuration ---
 AUTO_CONFIRM=false
-if [[ "$1" == "-y" ]]; then AUTO_CONFIRM=true; fi
+if [[ "${1:-}" == "-y" ]]; then AUTO_CONFIRM=true; fi
 
 # --- Detection ---
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 IS_WORK=false
-if [[ "$MYEMAIL" == *"@google.com" ]] || [[ -d /google ]]; then IS_WORK=true; fi
+if [[ "${MYEMAIL:-}" == *"@google.com" ]] || [[ -d /google ]]; then IS_WORK=true; fi
 
 IS_BAZZITE=false
 if [[ -f /etc/os-release ]] && grep -q "Bazzite" /etc/os-release; then IS_BAZZITE=true; fi
 
 echo "Context: [Work: $IS_WORK] [Bazzite: $IS_BAZZITE]"
+
+# --- Package name remapping ---
+# Maps logical tool name -> (apt_pkg  apt_bin  dnf_pkg  dnf_bin  brew_pkg  brew_bin)
+# Empty string = same as tool name. "NONE" = not available via that provider.
+declare -A PKG_APT PKG_DNF BIN_APT BIN_DNF
+PKG_APT=( [fd]=fd-find  [bat]=bat )
+BIN_APT=( [fd]=fdfind   [bat]=batcat )
+PKG_DNF=( [fd]=fd-find [helix]=helix )
+BIN_DNF=( )
+
+get_pkg() {
+    local tool="$1" provider="$2"
+    case "$provider" in
+        apt)  echo "${PKG_APT[$tool]:-$tool}" ;;
+        dnf)  echo "${PKG_DNF[$tool]:-$tool}" ;;
+        *)    echo "$tool" ;;
+    esac
+}
+
+get_bin() {
+    local tool="$1" provider="$2"
+    case "$provider" in
+        apt)  echo "${BIN_APT[$tool]:-$tool}" ;;
+        dnf)  echo "${BIN_DNF[$tool]:-$tool}" ;;
+        *)    echo "$tool" ;;
+    esac
+}
 
 # --- Rule-Based Providers ---
 function confirm_install() {
@@ -37,6 +64,16 @@ function try_install() {
         return 0
     fi
 
+    # Also check provider-specific binary names (e.g. batcat, fdfind)
+    for p in apt dnf brew; do
+        local alt_bin
+        alt_bin=$(get_bin "$tool" "$p")
+        if [[ "$alt_bin" != "$tool" ]] && command -v "$alt_bin" >/dev/null; then
+            echo "✓ $tool is already installed (as $alt_bin)."
+            return 0
+        fi
+    done
+
     if ! confirm_install "$tool"; then
         echo "Skipping $tool."
         return 0
@@ -45,40 +82,44 @@ function try_install() {
     # Define Provider Order
     local providers=()
     if [ "$IS_BAZZITE" = true ]; then
-        providers=("brew" "dnf" "ostree")
-    else
+        # Bazzite: immutable OS. dnf is NOT available on the host.
+        # Prefer brew (user-space), fall back to rpm-ostree (needs reboot).
+        providers=("brew" "ostree")
+    elif command -v apt-get >/dev/null; then
         providers=("apt" "brew")
+    elif command -v dnf >/dev/null; then
+        providers=("dnf" "brew")
+    else
+        providers=("brew")
     fi
 
     for p in "${providers[@]}"; do
+        local pkg
+        pkg=$(get_pkg "$tool" "$p")
+
         case $p in
             brew)
                 if command -v brew >/dev/null; then
                     echo "Trying Brew for $tool..."
-                    if brew install "$tool" 2>/dev/null; then return 0; fi
+                    if brew install "$pkg" 2>/dev/null; then return 0; fi
                 fi
                 ;;
             apt)
                 if command -v apt-get >/dev/null; then
-                    echo "Trying APT for $tool..."
-                    # Remap for APT
-                    local apt_tool="$tool"
-                    [[ "$tool" == "fd" ]] && apt_tool="fd-find"
-                    [[ "$tool" == "bat" ]] && apt_tool="bat"
-                    if sudo apt-get install -y "$apt_tool" 2>/dev/null; then return 0; fi
+                    echo "Trying APT for $tool ($pkg)..."
+                    if sudo apt-get install -y "$pkg" 2>/dev/null; then return 0; fi
                 fi
                 ;;
             dnf)
-                # For Bazzite, usually inside a toolbox/distrobox
                 if command -v dnf >/dev/null; then
-                    echo "Trying DNF for $tool..."
-                    if sudo dnf install -y "$tool" 2>/dev/null; then return 0; fi
+                    echo "Trying DNF for $tool ($pkg)..."
+                    if sudo dnf install -y "$pkg" 2>/dev/null; then return 0; fi
                 fi
                 ;;
             ostree)
                 if command -v rpm-ostree >/dev/null; then
-                    echo "Trying rpm-ostree for $tool (Layering)..."
-                    if sudo rpm-ostree install "$tool"; then
+                    echo "Trying rpm-ostree for $tool ($pkg) — will need reboot..."
+                    if sudo rpm-ostree install "$pkg"; then
                         echo "!!! Reboot required for $tool."
                         return 0
                     fi
@@ -88,7 +129,7 @@ function try_install() {
     done
 
     echo "✗ Failed to install $tool via available providers."
-    return 1
+    return 0  # Don't crash the script for a single tool
 }
 
 # --- AI Tool Specifics ---
@@ -97,7 +138,13 @@ function install_ai_tools() {
     if ! command -v gemini >/dev/null; then
         if confirm_install "gemini-cli"; then
             echo "Installing Gemini CLI..."
-            curl -sSL https://raw.githubusercontent.com/google/gemini-cli/main/install.sh | bash
+            if command -v npm >/dev/null; then
+                npm install -g @google/gemini-cli
+            elif command -v brew >/dev/null; then
+                brew install gemini-cli
+            else
+                echo "✗ npm or brew required for gemini-cli."
+            fi
         fi
     fi
 
@@ -112,13 +159,39 @@ function install_ai_tools() {
     # External AI (Home Only)
     if ! command -v claude >/dev/null; then
         if confirm_install "claude-code"; then
-            npm install -g @anthropic-ai/claude-code
+            if command -v npm >/dev/null; then
+                npm install -g @anthropic-ai/claude-code
+            else
+                echo "✗ npm not found, skipping claude-code."
+            fi
         fi
     fi
 }
 
 # --- Main Execution ---
 echo "--- Starting Provisioning ---"
+
+# Brew is required on Bazzite (immutable OS, no dnf on host) and is the
+# best way to get modern CLI tools (helix, yazi) on Debian/Ubuntu too.
+if ! command -v brew >/dev/null; then
+    echo ""
+    echo "Homebrew is not installed."
+    if [ "$IS_BAZZITE" = true ]; then
+        echo "On Bazzite, brew is the primary package manager (dnf is not available on the host)."
+    else
+        echo "Some tools (helix, yazi) are only available via brew."
+    fi
+    if confirm_install "homebrew"; then
+        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+        # Add brew to current session PATH
+        if [ -x /home/linuxbrew/.linuxbrew/bin/brew ]; then
+            eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+        elif [ -x "$HOME/.linuxbrew/bin/brew" ]; then
+            eval "$("$HOME/.linuxbrew/bin/brew" shellenv)"
+        fi
+    fi
+    echo ""
+fi
 
 # Core Utilities
 try_install "helix" "hx"
@@ -131,11 +204,6 @@ try_install "fzf"
 try_install "jq"
 try_install "bat"
 try_install "fd"
-
-# Language Runtimes
-if ! command -v brew >/dev/null && [ "$IS_WORK" = false ]; then
-    echo "Brew not found. Consider installing it first."
-fi
 
 # AI Tools
 if [ "$IS_WORK" = false ]; then
