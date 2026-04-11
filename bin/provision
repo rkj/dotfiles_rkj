@@ -10,9 +10,19 @@ if [[ "${1:-}" == "-y" ]]; then AUTO_CONFIRM=true; fi
 
 # --- Detection ---
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+DOTFILES_ROOT="$(cd "$SCRIPT_DIR/.." >/dev/null 2>&1 && pwd)"
+
+for env_file in "$DOTFILES_ROOT/env" "$DOTFILES_ROOT/env.local"; do
+    if [[ -f "$env_file" ]]; then
+        # shellcheck disable=SC1090
+        source "$env_file"
+    fi
+done
 
 IS_WORK=false
-if [[ "${MYEMAIL:-}" == *"@google.com" ]] || [[ -d /google ]]; then IS_WORK=true; fi
+if [[ "${DOTFILES_IS_WORK:-}" == "1" ]] || [[ "${DOTFILES_IS_WORK:-}" == "true" ]] || [[ "${DOTFILES_IS_WORK:-}" == "yes" ]]; then
+    IS_WORK=true
+fi
 
 IS_BAZZITE=false
 if [[ -f /etc/os-release ]] && grep -q "Bazzite" /etc/os-release; then IS_BAZZITE=true; fi
