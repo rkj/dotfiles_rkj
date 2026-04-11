@@ -4,12 +4,12 @@ To get started:
 ```sh
 $ git clone git@github.com:rkj/dotfiles_rkj.git
 $ cd dotfiles_rkj
-$ ./install_debian_debs.sh # on debian, on other distros install whatever needed
+$ ./bin/provision
 $ ./init.sh
 ```
 
 To add new files into the repo use:
 ```sh
-$ adopt.sh ~/.file_name
+$ ./adopt.sh ~/.file_name
+$ ./adopt.sh --force ~/.file_name # overwrite an existing repo destination
 ```
-

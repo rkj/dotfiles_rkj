@@ -10,7 +10,7 @@ All CLI tools and system packages MUST be managed via the `provision` script (`$
 - **Visual Theme:** Prompt and shell aesthetics are managed by `$DOTFILES/bin/apply-tide-theme.fish`. This script is called automatically by `provision`.
 - **Package name remapping:** Some tools have different package/binary names across distros. Update the `PKG_APT`, `BIN_APT`, `PKG_DNF`, `BIN_DNF` tables in `provision` when adding tools with name differences (e.g., `fd` → `fd-find`/`fdfind` on Debian, `bat` → `batcat` on Debian).
 - **System Preference:** 
-    - **Bazzite (Fedora Atomic):** Immutable OS — `dnf` is NOT available on the host. `brew` is the primary package manager. `rpm-ostree` can layer packages but requires a reboot; avoid unless necessary. `provision` will offer to install brew if missing.
+    - **Bazzite (Fedora Atomic):** Immutable OS — `dnf` is NOT available on the host. `brew` is the primary package manager. Do not use `rpm-ostree` layering. `provision` will offer to install brew if missing.
     - **Debian/Ubuntu:** `apt` for core tools, `brew` for modern CLI tools not in apt repos (helix, yazi).
     - **Fedora (non-atomic):** `dnf` for core tools, `brew` as fallback.
 

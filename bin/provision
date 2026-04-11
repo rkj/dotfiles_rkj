@@ -82,9 +82,9 @@ function try_install() {
     # Define Provider Order
     local providers=()
     if [ "$IS_BAZZITE" = true ]; then
-        # Bazzite: immutable OS. dnf is NOT available on the host.
-        # Prefer brew (user-space), fall back to rpm-ostree (needs reboot).
-        providers=("brew" "ostree")
+        # Bazzite: immutable OS. dnf is not available on the host.
+        # Prefer brew and skip layering packages into the host.
+        providers=("brew")
     elif command -v apt-get >/dev/null; then
         providers=("apt" "brew")
     elif command -v dnf >/dev/null; then
@@ -114,15 +114,6 @@ function try_install() {
                 if command -v dnf >/dev/null; then
                     echo "Trying DNF for $tool ($pkg)..."
                     if sudo dnf install -y "$pkg" 2>/dev/null; then return 0; fi
-                fi
-                ;;
-            ostree)
-                if command -v rpm-ostree >/dev/null; then
-                    echo "Trying rpm-ostree for $tool ($pkg) — will need reboot..."
-                    if sudo rpm-ostree install "$pkg"; then
-                        echo "!!! Reboot required for $tool."
-                        return 0
-                    fi
                 fi
                 ;;
         esac
