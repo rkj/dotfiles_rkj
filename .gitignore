@@ -1,5 +1,6 @@
 config/fish/fish_variables
 config/fish/config.fish
-.codex/
-.claude/
+.codex
+.claude
 env.local
+
