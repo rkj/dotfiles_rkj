@@ -1,3 +1,3 @@
-function today
+function history_today
     history_from (date +%Y-%m-%d)
 end
