@@ -198,7 +198,7 @@ fi
 try_install "helix" "hx"
 try_install "yazi"
 try_install "btop"
-try_install "ncdu"
+try_install "gdu"
 try_install "mpv"
 try_install "sox"
 try_install "fzf"
