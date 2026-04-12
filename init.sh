@@ -58,6 +58,8 @@ else
   echo "DOTFILES already in ~/.profile (updated path)"
 fi
 
+mkdir -p ~/.vim/{tmp,backup}
+
 # Prepare bash_profile if needed.
 if [ ! -e "$HOME/.bash_profile" ]; then
   cp "$root/stubs/bash_profile" "$HOME/.bash_profile"
