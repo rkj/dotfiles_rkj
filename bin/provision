@@ -23,6 +23,7 @@ IS_WORK=false
 if [[ "${DOTFILES_IS_WORK:-}" == "1" ]] || [[ "${DOTFILES_IS_WORK:-}" == "true" ]] || [[ "${DOTFILES_IS_WORK:-}" == "yes" ]]; then
     IS_WORK=true
 fi
+export DOTFILES_IS_WORK="$IS_WORK"
 
 IS_BAZZITE=false
 if [[ -f /etc/os-release ]] && grep -q "Bazzite" /etc/os-release; then IS_BAZZITE=true; fi
@@ -169,6 +170,28 @@ function install_ai_tools() {
     fi
 }
 
+# --- Font Specifics ---
+function install_fonts() {
+    # Kitty and Tide prompt require Nerd Fonts (JetBrains Mono)
+    if ! fc-list : family | grep -iq "JetBrainsMono"; then
+        if confirm_install "JetBrainsMono Nerd Font"; then
+            echo "Installing JetBrainsMono Nerd Font..."
+            if command -v brew >/dev/null; then
+                brew install --cask font-jetbrains-mono-nerd-font
+            else
+                local font_dir="$HOME/.local/share/fonts"
+                mkdir -p "$font_dir"
+                curl -fLo "/tmp/JetBrainsMono.zip" https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip
+                unzip -o "/tmp/JetBrainsMono.zip" -d "$font_dir"
+                fc-cache -fv
+                rm "/tmp/JetBrainsMono.zip"
+            fi
+        fi
+    else
+        echo "✓ JetBrainsMono Nerd Font is already installed."
+    fi
+}
+
 # --- Main Execution ---
 echo "--- Starting Provisioning ---"
 
@@ -210,6 +233,9 @@ try_install "fd"
 if [ "$IS_WORK" = false ]; then
     install_ai_tools
 fi
+
+# Fonts
+install_fonts
 
 # Visual Theme (Fish/Tide)
 if command -v fish >/dev/null; then

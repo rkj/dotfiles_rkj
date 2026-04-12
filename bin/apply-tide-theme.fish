@@ -4,8 +4,16 @@
 
 echo "🛡️ Applying Tide Visual Theme..."
 
+set -l right_items status cmd_duration jobs direnv node python rustc java php pulumi go kubectl distrobox toolbox nix_shell crystal elixir zig time
+
+# Conditionally add personal-only items
+if test "$DOTFILES_IS_WORK" != true
+    # Add ruby and gcloud for personal environments
+    set -a right_items ruby gcloud
+end
+
 set -U tide_left_prompt_items os context pwd git newline character
-set -U tide_right_prompt_items status cmd_duration jobs direnv node python rustc java php pulumi ruby go gcloud kubectl distrobox toolbox nix_shell crystal elixir zig time
+set -U tide_right_prompt_items $right_items
 
 set -U tide_prompt_transient_enabled false
 
@@ -33,4 +41,8 @@ set -U tide_prompt_pad_items true
 set -U tide_left_prompt_suffix \ue0b4
 set -U tide_right_prompt_prefix \ue0b6
 
-echo "✓ Theme applied. Restart your shell to see changes."
+if command -v tide >/dev/null
+    tide reload
+end
+
+echo "✓ Theme applied."

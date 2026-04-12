@@ -4,4 +4,5 @@ config/fish/config.fish
 config/fish/fish_variables
 config/fish/functions/_tide*
 env.local
+!stubs/env.local
 
