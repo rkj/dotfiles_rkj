@@ -1,6 +1,7 @@
-config/fish/fish_variables
+.claude
+.codex
 config/fish/config.fish
+config/fish/fish_variables
 config/fish/functions/_tide*
-.codex/
-.claude/
+env.local
 

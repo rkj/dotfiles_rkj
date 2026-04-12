@@ -4,28 +4,28 @@
 
 # Find proper path
 root="$(cd "$(dirname "$0")" && pwd)"
-cd $root
-root=`pwd`
+cd "$root"
+root="$(pwd)"
 
 # Make stub files.
-for stub in stubs/*; do
-  file=`basename $stub`
-  if [ ! -e $HOME/.$file ]; then
-    cp $root/$stub $HOME/.$file
+for stub in "$root"/stubs/*; do
+  file="$(basename "$stub")"
+  if [ ! -e "$HOME/.$file" ]; then
+    cp "$stub" "$HOME/.$file"
   else
-    echo File $HOME/.$file already exists
+    echo "File $HOME/.$file already exists"
   fi
-done;
+done
 
 # Update symlinks for dotfiles (links/ -> ~/.<name>)
-for link in links/*; do
-  file=`basename $link`
-  ln -nfs $root/$link $HOME/.$file
-done;
+for link in "$root"/links/*; do
+  file="$(basename "$link")"
+  ln -nfs "$link" "$HOME/.$file"
+done
 
 # Update ~/.config symlinks (config/<name> -> ~/.config/<name>)
-mkdir -p $HOME/.config
-for cfg in $root/config/*/; do
+mkdir -p "$HOME/.config"
+for cfg in "$root"/config/*/; do
   name=$(basename "$cfg")
   target="$HOME/.config/$name"
   if [ -d "$target" ] && [ ! -L "$target" ]; then
@@ -35,26 +35,33 @@ for cfg in $root/config/*/; do
   ln -nfs "$cfg" "$target"
 done
 
-[ ! -e $HOME/.xmonad/xmonad.hs ] && mkdir -p $HOME/.xmonad && ln -nfs $root/xmonad.hs $HOME/.xmonad/xmonad.hs
-mkdir -p $HOME/.profiles/
-touch $HOME/.profiles/empty.sh
+if [ ! -e "$HOME/.xmonad/xmonad.hs" ]; then
+  mkdir -p "$HOME/.xmonad"
+  ln -nfs "$root/links/xmonad.hs" "$HOME/.xmonad/xmonad.hs"
+fi
+mkdir -p "$HOME/.profiles/"
+touch "$HOME/.profiles/empty.sh"
 
 # Ensure DOTFILES is set in .profile.
-if ! grep -q "^export DOTFILES=" $HOME/.profile 2>/dev/null; then
-  echo ""                                        >> $HOME/.profile
-  echo "export DOTFILES=$root"                   >> $HOME/.profile
-  echo '[ -f $DOTFILES/includes/profile.sh ] && source $DOTFILES/includes/profile.sh'  >> $HOME/.profile
+profile_path="$HOME/.profile"
+escaped_root="${root//|/\\|}"
+escaped_root="${escaped_root//&/\\&}"
+
+if ! grep -q "^export DOTFILES=" "$profile_path" 2>/dev/null; then
+  echo "" >> "$profile_path"
+  echo "export DOTFILES=$root" >> "$profile_path"
+  echo '[ -f $DOTFILES/includes/profile.sh ] && source $DOTFILES/includes/profile.sh' >> "$profile_path"
   echo "Added DOTFILES to ~/.profile"
 else
   # Update existing DOTFILES line if path changed.
-  sed -i "s|^export DOTFILES=.*|export DOTFILES=$root|" $HOME/.profile
+  sed -i "s|^export DOTFILES=.*|export DOTFILES=$escaped_root|" "$profile_path"
   echo "DOTFILES already in ~/.profile (updated path)"
 fi
 
 mkdir -p ~/.vim/{tmp,backup}
 
 # Prepare bash_profile if needed.
-if [ ! -e $HOME/.bash_profile ]; then
+if [ ! -e "$HOME/.bash_profile" ]; then
   cp "$root/stubs/bash_profile" "$HOME/.bash_profile"
 else
   cat <<EOQ
@@ -68,8 +75,8 @@ EOQ
 fi
 
 # Prepare bashrc if needed.
-if [ ! -e $HOME/.bashrc ]; then
-  echo 'source $DOTFILES/includes/bashrc'  >> $HOME/.bashrc
+if [ ! -e "$HOME/.bashrc" ]; then
+  echo 'source $DOTFILES/includes/bashrc' >> "$HOME/.bashrc"
 else
   cat <<EOQ
 Remember to add:
@@ -81,7 +88,7 @@ EOQ
 fi
 
 # Prepare tmux.conf if needed.
-if [ ! -e $HOME/.tmux.conf ]; then
+if [ ! -e "$HOME/.tmux.conf" ]; then
   cp "$root/stubs/tmux.conf" "$HOME/.tmux.conf"
 else
   cat <<EOQ
@@ -96,4 +103,4 @@ fi
 
 echo ""
 echo "--- Installing tools ---"
-$root/bin/provision
+"$root/bin/provision"

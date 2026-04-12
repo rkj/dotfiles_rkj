@@ -2,13 +2,20 @@
 # adopt.sh - move a dotfile or ~/.config entry into the repo and symlink it back
 #
 # Usage:
-#   ./adopt.sh ~/.foo           # moves to links/foo, symlinks ~/.foo
-#   ./adopt.sh ~/.config/foo    # moves to config/foo, symlinks ~/.config/foo
+#   ./adopt.sh ~/.foo             # moves to links/foo, symlinks ~/.foo
+#   ./adopt.sh ~/.config/foo      # moves to config/foo, symlinks ~/.config/foo
+#   ./adopt.sh --force ~/.foo     # overwrite an existing repo destination
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+FORCE=false
+
+if [[ "${1:-}" == "--force" || "${1:-}" == "-f" ]]; then
+  FORCE=true
+  shift
+fi
 
 if [[ -z "$1" ]]; then
-  echo "Usage: $0 <~/.dotfile | ~/.config/name>"
+  echo "Usage: $0 [--force|-f] <~/.dotfile | ~/.config/name>"
   exit 1
 fi
 
@@ -26,6 +33,10 @@ if [[ "$target" == "$HOME/.config/"* ]]; then
   fi
   if [[ ! -e "$target" ]]; then
     echo "Error: '$target' does not exist."
+    exit 1
+  fi
+  if [[ -e "$dest" && "$FORCE" != true ]]; then
+    echo "Error: destination '$dest' already exists. Re-run with --force to overwrite it."
     exit 1
   fi
 
@@ -54,6 +65,11 @@ else
   # Strip leading dot for the repo filename
   link="${filename:1}"
   dest="$SCRIPT_DIR/links/$link"
+
+  if [[ -e "$dest" && "$FORCE" != true ]]; then
+    echo "Error: destination '$dest' already exists. Re-run with --force to overwrite it."
+    exit 1
+  fi
 
   echo "mv $target $dest"
   mv "$target" "$dest"

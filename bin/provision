@@ -10,9 +10,19 @@ if [[ "${1:-}" == "-y" ]]; then AUTO_CONFIRM=true; fi
 
 # --- Detection ---
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+DOTFILES_ROOT="$(cd "$SCRIPT_DIR/.." >/dev/null 2>&1 && pwd)"
+
+for env_file in "$DOTFILES_ROOT/env" "$DOTFILES_ROOT/env.local"; do
+    if [[ -f "$env_file" ]]; then
+        # shellcheck disable=SC1090
+        source "$env_file"
+    fi
+done
 
 IS_WORK=false
-if [[ "${MYEMAIL:-}" == *"@google.com" ]] || [[ -d /google ]]; then IS_WORK=true; fi
+if [[ "${DOTFILES_IS_WORK:-}" == "1" ]] || [[ "${DOTFILES_IS_WORK:-}" == "true" ]] || [[ "${DOTFILES_IS_WORK:-}" == "yes" ]]; then
+    IS_WORK=true
+fi
 
 IS_BAZZITE=false
 if [[ -f /etc/os-release ]] && grep -q "Bazzite" /etc/os-release; then IS_BAZZITE=true; fi
@@ -82,9 +92,9 @@ function try_install() {
     # Define Provider Order
     local providers=()
     if [ "$IS_BAZZITE" = true ]; then
-        # Bazzite: immutable OS. dnf is NOT available on the host.
-        # Prefer brew (user-space), fall back to rpm-ostree (needs reboot).
-        providers=("brew" "ostree")
+        # Bazzite: immutable OS. dnf is not available on the host.
+        # Prefer brew and skip layering packages into the host.
+        providers=("brew")
     elif command -v apt-get >/dev/null; then
         providers=("apt" "brew")
     elif command -v dnf >/dev/null; then
@@ -114,15 +124,6 @@ function try_install() {
                 if command -v dnf >/dev/null; then
                     echo "Trying DNF for $tool ($pkg)..."
                     if sudo dnf install -y "$pkg" 2>/dev/null; then return 0; fi
-                fi
-                ;;
-            ostree)
-                if command -v rpm-ostree >/dev/null; then
-                    echo "Trying rpm-ostree for $tool ($pkg) — will need reboot..."
-                    if sudo rpm-ostree install "$pkg"; then
-                        echo "!!! Reboot required for $tool."
-                        return 0
-                    fi
                 fi
                 ;;
         esac
@@ -197,7 +198,7 @@ fi
 try_install "helix" "hx"
 try_install "yazi"
 try_install "btop"
-try_install "ncdu"
+try_install "gdu"
 try_install "mpv"
 try_install "sox"
 try_install "fzf"

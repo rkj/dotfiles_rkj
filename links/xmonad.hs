@@ -1,4 +1,5 @@
 import System.IO
+import Data.List (isPrefixOf)
 import Data.Monoid
 import XMonad hiding (Tall)
 import XMonad.Config.Gnome
@@ -43,7 +44,7 @@ myDoFullFloat = doF W.focusDown <+> doFullFloat
 manageHangouts :: ManageHook
 manageHangouts = composeAll
    [ className =? "crx_knipolnnllmklapflnccelgolnpehhpl" --> doBottomLeftFloat <+> doShift "1:web"
-   , stringProperty "WM_NAME" =? "Hangouts - rkj@google.com" --> doBottomLeftFloat <+> doShift "1:web"
+   , fmap ("Hangouts -" `isPrefixOf`) (stringProperty "WM_NAME") --> doBottomLeftFloat <+> doShift "1:web"
    -- only the last one works when LG3D is set :/
    , stringProperty "WM_WINDOW_ROLE" =? "app" --> doBottomLeftFloat <+> doShift "1:web"
    ]
