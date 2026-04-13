@@ -1,23 +1,16 @@
 # Standing Orders for Autonomous Agents
 
-This document defines the protocols for managing the rkj dotfiles environment.
+This document defines the protocols for managing the rkj personal dotfiles environment.
 
 ## 🛠️ Tool Management
-All CLI tools and system packages MUST be managed via the `provision` script (`$DOTFILES/bin/provision`).
+All CLI tools and system packages MUST be managed via the `provision` script (`bin/provision`).
 
 - **Adding a Tool:** Update the `TOOLS` list in the `provision` script. 
-- **Renaming:** Use the `REMAP` logic for tools that have different names across package managers (e.g., `fd` vs `fd-find`).
-- **Fish Plugins:** NEVER commit internal plugin functions (e.g., `_tide_*`) or third-party prompts to the repository. All Fish plugins MUST be managed by `fisher` within the `provision` script to avoid shadowing and version conflicts.
-- **Visual Theme:** Prompt and shell aesthetics are managed by `$DOTFILES/bin/apply-tide-theme.fish`. This script is called automatically by `provision`.
-- **Package name remapping:** Some tools have different package/binary names across distros. Update the `PKG_APT`, `BIN_APT`, `PKG_DNF`, `BIN_DNF` tables in `provision` when adding tools with name differences (e.g., `fd` → `fd-find`/`fdfind` on Debian, `bat` → `batcat` on Debian).
-- **System Preference:** 
-    - **Bazzite (Fedora Atomic):** Immutable OS — `dnf` is NOT available on the host. `brew` is the primary package manager. Do not use `rpm-ostree` layering. `provision` will offer to install brew if missing.
-    - **Debian/Ubuntu:** `apt` for core tools, `brew` for modern CLI tools not in apt repos (helix, yazi).
-    - **Fedora (non-atomic):** `dnf` for core tools, `brew` as fallback.
+- **Fish Plugins:** All Fish plugins MUST be managed by `fisher` within the `provision` script.
+- **Visual Theme:** Prompt and shell aesthetics are managed by `bin/apply-tide-theme.fish`. This script is called automatically by `provision`.
 
 ## 🚀 Environment Awareness
-- **At Work:** Do not attempt to install unauthorized external AI tools (e.g., `claude-code`).
-- **Pathing:** All custom scripts go to `$DOTFILES/bin/`. All environment variables go to `$DOTFILES/env`.
+- **Pathing:** All custom scripts go to `bin/`. All environment variables go to `env/`.
 
 ## 🧪 Verification
 After updating any configuration or adding a tool, verify:
