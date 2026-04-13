@@ -6,7 +6,8 @@
 #   ./adopt.sh ~/.config/foo      # moves to config/foo, symlinks ~/.config/foo
 #   ./adopt.sh --force ~/.foo     # overwrite an existing repo destination
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+# Resolve to absolute path of the submodule root
+SCRIPT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 FORCE=false
 
 if [[ "${1:-}" == "--force" || "${1:-}" == "-f" ]]; then

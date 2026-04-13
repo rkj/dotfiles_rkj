@@ -7,7 +7,7 @@ All CLI tools and system packages MUST be managed via the `provision` script (`b
 
 - **Adding a Tool:** Update the `TOOLS` list in the `provision` script. 
 - **Fish Plugins:** All Fish plugins MUST be managed by `fisher` within the `provision` script.
-- **Visual Theme:** Prompt and shell aesthetics are managed by `bin/apply-tide-theme.fish`. This script is called automatically by `provision`.
+- **Visual Theme:** Prompt and shell aesthetics are managed by `bin/apply-tide-theme.fish`. This script is called automatically by `scripts/init.sh`.
 
 ## 🚀 Environment Awareness
 - **Pathing:** All custom scripts go to `bin/`. All environment variables go to `env/`.

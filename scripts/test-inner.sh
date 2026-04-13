@@ -15,8 +15,8 @@ check() {
 }
 
 cd ~/dotfiles_rkj
-echo "=== Running init.sh ==="
-./init.sh
+echo "=== Running scripts/init.sh ==="
+./scripts/init.sh
 
 echo ""
 echo "=== Symlinks (links/) ==="
@@ -64,9 +64,9 @@ check "EDITOR set in fish" test -n "$FISH_EDITOR"
 echo "  fish EDITOR=$FISH_EDITOR"
 
 echo ""
-echo "=== Idempotency: run init.sh again ==="
-./init.sh
-check "second init.sh succeeds" true
+echo "=== Idempotency: run scripts/init.sh again ==="
+./scripts/init.sh
+check "second scripts/init.sh succeeds" true
 
 echo ""
 echo "=== Results: $PASS passed, $FAIL failed ==="

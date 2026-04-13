@@ -1,17 +1,19 @@
 #!/usr/bin/env bash
 # Smoke-test dotfiles in a clean Debian container.
-# Usage: ./test-in-docker.sh
+# Usage: ./scripts/test-in-docker.sh
 #
 # Works with remote Docker contexts by using docker cp instead of bind mounts.
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+# This script is in personal/scripts/test-in-docker.sh
+# We want to copy the personal/ root into the container.
+PERSONAL_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
 CONTAINER=$(docker create debian:bookworm sleep 3600)
 trap "docker rm -f $CONTAINER >/dev/null 2>&1" EXIT
 
 # Copy repo into container
-docker cp "$SCRIPT_DIR" "$CONTAINER:/dotfiles"
+docker cp "$PERSONAL_ROOT" "$CONTAINER:/dotfiles"
 
 # Start container and run test
 docker start "$CONTAINER" >/dev/null
@@ -24,5 +26,5 @@ docker exec "$CONTAINER" bash -eux -c '
   cp -r /dotfiles /home/testuser/dotfiles_rkj
   chown -R testuser:testuser /home/testuser/dotfiles_rkj
 
-  su - testuser -c "bash /home/testuser/dotfiles_rkj/test-inner.sh"
+  su - testuser -c "bash /home/testuser/dotfiles_rkj/scripts/test-inner.sh"
 '

@@ -3,7 +3,7 @@
 # to the newest version and create any new stubs.
 
 # Find proper path
-root="$(cd "$(dirname "$0")" && pwd)"
+root="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$root"
 root="$(pwd)"
 
