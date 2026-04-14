@@ -1,4 +1,4 @@
-#!/bin/zsh
+#!/bin/bash
 # It's ok to call this script multiple times, it will update all the links
 # to the newest version and create any new stubs.
 
