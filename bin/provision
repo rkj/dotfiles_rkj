@@ -12,7 +12,8 @@ if [[ "${1:-}" == "-y" ]]; then AUTO_CONFIRM=true; fi
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 DOTFILES_ROOT="$(cd "$SCRIPT_DIR/.." >/dev/null 2>&1 && pwd)"
 
-for env_file in "$DOTFILES_ROOT/env" "$DOTFILES_ROOT/env.local"; do
+# Check repo-level env and machine-level ~/.env.local
+for env_file in "$DOTFILES_ROOT/env" "$DOTFILES_ROOT/env.local" "$HOME/.env" "$HOME/.env.local"; do
     if [[ -f "$env_file" ]]; then
         # shellcheck disable=SC1090
         source "$env_file"
@@ -172,8 +173,12 @@ function install_ai_tools() {
 
 # --- Font Specifics ---
 function install_fonts() {
+    echo "Checking fonts..."
     # Kitty and Tide prompt require Nerd Fonts (JetBrains Mono)
-    if ! fc-list : family | grep -iq "JetBrainsMono"; then
+    # We use a broader pattern and handle grep return code safely
+    if fc-list : family | grep -iE "JetBrains|JetBrainsMono" > /dev/null 2>&1; then
+        echo "✓ JetBrains Mono / Nerd Font is already installed."
+    else
         if confirm_install "JetBrainsMono Nerd Font"; then
             echo "Installing JetBrainsMono Nerd Font..."
             if command -v brew >/dev/null; then
@@ -187,8 +192,6 @@ function install_fonts() {
                 rm "/tmp/JetBrainsMono.zip"
             fi
         fi
-    else
-        echo "✓ JetBrainsMono Nerd Font is already installed."
     fi
 }
 
@@ -251,9 +254,9 @@ if command -v fish >/dev/null; then
         fish -c "fisher update"
     fi
 
-    if [ -f "$SCRIPT_DIR/apply-tide-theme.fish" ]; then
+    if [ -f "$DOTFILES_ROOT/scripts/apply-tide-theme.fish" ]; then
         echo "Applying Tide Theme..."
-        fish "$SCRIPT_DIR/apply-tide-theme.fish"
+        fish "$DOTFILES_ROOT/scripts/apply-tide-theme.fish"
     fi
 fi
 
