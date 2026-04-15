@@ -103,6 +103,7 @@ function _tide_item_vcs_dir
         # JJ: outgoing = commits between trunk and working copy parent
         set -l ahead (jj --ignore-working-copy log --no-graph -r 'trunk()..@-' -T '"\n"' --no-pager 2>/dev/null | count)
         test "$ahead" -gt 0; and set -a status_parts "⇡$ahead"
+    end
 
     set -l output "$icon$repo_display"
     if test (count $status_parts) -gt 0
