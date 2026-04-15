@@ -20,7 +20,7 @@ docker start "$CONTAINER" >/dev/null
 
 docker exec "$CONTAINER" bash -eux -c '
   apt-get update -qq
-  apt-get install -y -qq zsh fish git sudo coreutils >/dev/null 2>&1
+  apt-get install -y -qq zsh fish git sudo coreutils curl >/dev/null 2>&1
 
   useradd -m -s /bin/bash testuser
   cp -r /dotfiles /home/testuser/dotfiles_rkj

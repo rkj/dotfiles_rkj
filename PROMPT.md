@@ -14,6 +14,7 @@ The prompt splits the version control system (VCS) information into two distinct
     *   Displays the repository root path.
     *   Displays an icon indicating the VCS type ( for Git, 🥋 for JJ, ☿ for Hg).
     *   Shows status counters: upstream arrows (⇣⇡), stash (*), conflicts (~), staged (+), dirty (!), untracked (?).
+    *   For JJ repos: ⇡ shows outgoing commits (`trunk()..@-`). Stash is git-only.
     *   Does NOT show branch name (user always uses main).
     *   Changes background color based on status:
         *   **Green**: Clean.
