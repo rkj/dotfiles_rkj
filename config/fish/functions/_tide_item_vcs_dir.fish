@@ -19,8 +19,7 @@ function _tide_item_vcs_dir
 
     if test -z "$vcs_type"
         # Outside any repo — fall back to pwd-style display
-        set -l display (string replace -r "^$home_regex" '~' $PWD)
-        _tide_print_item vcs_dir "$tide_pwd_icon $display"
+        _tide_print_item pwd "$tide_pwd_icon "(string replace -r "^$home_regex" '~' $PWD)
         return
     end
 
