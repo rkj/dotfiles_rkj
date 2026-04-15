@@ -42,18 +42,26 @@ function _tide_item_vcs_dir
     set -l status_parts
 
     if test "$vcs_type" = git -o "$vcs_type" = jj
+        # Dirty/staged/untracked via git porcelain (works for both git and jj colocated)
         set -l stat (git --no-optional-locks status --porcelain 2>/dev/null)
         set -l conflicted (string match -r ^UU $stat | count)
         set -l staged (string match -r ^[ADMR] $stat | count)
         set -l dirty (string match -r ^.[ADMR] $stat | count)
         set -l untracked (string match -r '^\?\?' $stat | count)
-        set -l stash (git stash list 2>/dev/null | count)
 
         set -l behind 0
         set -l ahead 0
-        if git rev-list --count --left-right @{upstream}...HEAD 2>/dev/null | read -d \t -l b a
-            set behind $b
-            set ahead $a
+
+        if test "$vcs_type" = jj
+            # JJ: outgoing = commits between trunk and working copy parent
+            set ahead (jj log --no-graph -r 'trunk()..@-' -T '"\n"' 2>/dev/null | count)
+        else
+            set -l stash (git stash list 2>/dev/null | count)
+            if git rev-list --count --left-right @{upstream}...HEAD 2>/dev/null | read -d \t -l b a
+                set behind $b
+                set ahead $a
+            end
+            test "$stash" -gt 0; and set -a status_parts "*$stash"
         end
 
         # Determine bg color
@@ -66,7 +74,6 @@ function _tide_item_vcs_dir
         # Build status indicators
         test "$behind" -gt 0; and set -a status_parts "⇣$behind"
         test "$ahead" -gt 0; and set -a status_parts "⇡$ahead"
-        test "$stash" -gt 0; and set -a status_parts "*$stash"
         test "$conflicted" -gt 0; and set -a status_parts "~$conflicted"
         test "$staged" -gt 0; and set -a status_parts "+$staged"
         test "$dirty" -gt 0; and set -a status_parts "!$dirty"
