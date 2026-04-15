@@ -46,6 +46,12 @@ The `vcs_dir` item follows the same color pattern as Tide's built-in `_tide_item
 *   `scripts/tide-config.fish`: Auto-generated snapshot (committed to repo).
 *   `config/fish/fish_plugins`: Fisher plugin list (fisher + tide).
 
+## Design Principles
+
+- **Portability**: This configuration is designed to be easily cloned and deployed on any machine via `./scripts/init.sh`.
+- **Self-Contained**: It should not contain any proprietary or environment-specific hardcoded values.
+- **Extensibility**: Theme settings and variables are designed to be overrideable by external scripts if needed.
+
 ## Workflow
 
 After running `tide configure` to pick a base style:
