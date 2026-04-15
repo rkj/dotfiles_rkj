@@ -18,8 +18,10 @@ function _tide_item_vcs_dir
     end
 
     if test -z "$vcs_type"
-        # Outside any repo — fall back to pwd-style display
-        _tide_print_item pwd "$tide_pwd_icon "(string replace -r "^$home_regex" '~' $PWD)
+        # Outside any repo — use pwd colors (no save/restore needed, subprocess resets)
+        set -g tide_vcs_dir_bg_color $tide_pwd_bg_color
+        set -l display (string replace -r "^$home_regex" '~' $PWD)
+        _tide_print_item vcs_dir (set_color $tide_pwd_color_dirs; echo -ns "$tide_pwd_icon $display")
         return
     end
 
@@ -36,78 +38,72 @@ function _tide_item_vcs_dir
             set icon "☿ "
     end
 
-    # Status counters
-    set -l bg_color $tide_vcs_dir_bg_color
-    set -l status_parts
+    # Gather status
+    set -l behind 0
+    set -l ahead 0
+    set -l stash 0
+    set -l conflicted 0
+    set -l staged 0
+    set -l dirty 0
+    set -l untracked 0
 
     if test "$vcs_type" = git
-        # Dirty/staged/untracked via git porcelain
         set -l stat (git --no-optional-locks status --porcelain 2>/dev/null)
-        set -l conflicted (string match -r ^UU $stat | count)
-        set -l staged (string match -r ^[ADMR] $stat | count)
-        set -l dirty (string match -r ^.[ADMR] $stat | count)
-        set -l untracked (string match -r '^\?\?' $stat | count)
-
-        set -l behind 0
-        set -l ahead 0
-
-        set -l stash (git stash list 2>/dev/null | count)
+        set conflicted (string match -r ^UU $stat | count)
+        set staged (string match -r ^[ADMR] $stat | count)
+        set dirty (string match -r ^.[ADMR] $stat | count)
+        set untracked (string match -r '^\?\?' $stat | count)
+        set stash (git stash list 2>/dev/null | count)
         if git rev-list --count --left-right @{upstream}...HEAD 2>/dev/null | read -d \t -l b a
             set behind $b
             set ahead $a
         end
-        test "$stash" -gt 0; and set -a status_parts "*$stash"
 
-        # Determine bg color
         if test "$conflicted" -gt 0
-            set bg_color $tide_git_bg_color_urgent
+            set -g tide_vcs_dir_bg_color $tide_git_bg_color_urgent
         else if test "$staged" -gt 0 -o "$dirty" -gt 0 -o "$untracked" -gt 0
-            set bg_color $tide_git_bg_color_unstable
+            set -g tide_vcs_dir_bg_color $tide_git_bg_color_unstable
         end
-
-        # Build status indicators
-        test "$behind" -gt 0; and set -a status_parts "⇣$behind"
-        test "$ahead" -gt 0; and set -a status_parts "⇡$ahead"
-        test "$conflicted" -gt 0; and set -a status_parts "~$conflicted"
-        test "$staged" -gt 0; and set -a status_parts "+$staged"
-        test "$dirty" -gt 0; and set -a status_parts "!$dirty"
-        test "$untracked" -gt 0; and set -a status_parts "?$untracked"
 
     else if test "$vcs_type" = jj
-        # Use --ignore-working-copy to avoid slow snapshots in prompt
         set -l jj_stat (jj --ignore-working-copy status --no-pager 2>/dev/null)
         set -l jj_changes (jj --ignore-working-copy diff --summary -r @ --no-pager 2>/dev/null)
-        
-        set -l conflicted 0
-        if string match -q "*Conflict*" "$jj_stat"
-            set conflicted 1
-        end
-        
-        set -l modified (string match -r '^M ' $jj_changes | count)
-        set -l added (string match -r '^A ' $jj_changes | count)
-        set -l deleted (string match -r '^D ' $jj_changes | count)
-        
-        test "$conflicted" -gt 0; and set -a status_parts "~"
-        test "$added" -gt 0; and set -a status_parts "+$added"
-        test "$modified" -gt 0; and set -a status_parts "!$modified"
-        test "$deleted" -gt 0; and set -a status_parts "-$deleted"
-        
-        # Determine bg color
+
+        string match -q "*Conflict*" "$jj_stat"; and set conflicted 1
+        set staged (string match -r '^A ' $jj_changes | count)
+        set dirty (string match -r '^[MD] ' $jj_changes | count)
+
         if test "$conflicted" -gt 0
-            set bg_color CC0000 # Red
+            set -g tide_vcs_dir_bg_color $tide_git_bg_color_urgent
         else if test (count $jj_changes) -gt 0
-            set bg_color C4A000 # Yellow
+            set -g tide_vcs_dir_bg_color $tide_git_bg_color_unstable
         end
-        
-        # JJ: outgoing = commits between trunk and working copy parent
-        set -l ahead (jj --ignore-working-copy log --no-graph -r 'trunk()..@-' -T '"\n"' --no-pager 2>/dev/null | count)
-        test "$ahead" -gt 0; and set -a status_parts "⇡$ahead"
+
+        set ahead (jj --ignore-working-copy log --no-graph -r 'trunk()..@-' -T '"\n"' --no-pager 2>/dev/null | count)
     end
 
-    set -l output "$icon$repo_display"
-    if test (count $status_parts) -gt 0
-        set output "$output "(string join ' ' $status_parts)
-    end
-
-    tide_vcs_dir_bg_color=$bg_color _tide_print_item vcs_dir $output
+    # Build colored status string — only show non-zero counters
+    # Use black text like Tide's git item (tide_git_color_branch = 000000)
+    _tide_print_item vcs_dir (set_color $tide_git_color_branch; echo -ns "$icon$repo_display"
+        if test "$behind" -gt 0
+            set_color $tide_git_color_upstream; echo -ns ' ⇣'$behind
+        end
+        if test "$ahead" -gt 0
+            set_color $tide_git_color_upstream; echo -ns ' ⇡'$ahead
+        end
+        if test "$stash" -gt 0
+            set_color $tide_git_color_stash; echo -ns ' *'$stash
+        end
+        if test "$conflicted" -gt 0
+            set_color $tide_git_color_conflicted; echo -ns ' ~'$conflicted
+        end
+        if test "$staged" -gt 0
+            set_color $tide_git_color_staged; echo -ns ' +'$staged
+        end
+        if test "$dirty" -gt 0
+            set_color $tide_git_color_dirty; echo -ns ' !'$dirty
+        end
+        if test "$untracked" -gt 0
+            set_color $tide_git_color_untracked; echo -ns ' ?'$untracked
+        end)
 end

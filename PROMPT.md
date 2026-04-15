@@ -16,17 +16,26 @@ The prompt splits the version control system (VCS) information into two distinct
     *   Shows status counters: upstream arrows (⇣⇡), stash (*), conflicts (~), staged (+), dirty (!), untracked (?).
     *   For JJ repos: ⇡ shows outgoing commits (`trunk()..@-`). Stash is git-only.
     *   Does NOT show branch name (user always uses main).
-    *   Changes background color based on status:
-        *   **Green**: Clean.
-        *   **Yellow**: Working copy changes (dirty/staged/untracked).
-        *   **Red**: Conflicts.
+    *   Changes background color based on status (uses Tide's `tide_git_bg_color*` vars):
+        *   **Green** (`4E9A06`): Clean.
+        *   **Yellow** (`C4A000`): Working copy changes (dirty/staged/untracked).
+        *   **Red** (`CC0000`): Conflicts.
 
 2.  **Path Block (`vcs_path`)**:
     *   Displays the subpath inside the repository (only when not at repo root).
     *   Uses a folder icon ().
-    *   Maintains a steady Blue background (same as Tide's default pwd).
+    *   Maintains a steady Blue background (`3465A4`, same as Tide's default pwd).
 
-Outside any repo, `vcs_dir` falls back to standard pwd-style display.
+Outside any repo, `vcs_dir` falls back to pwd-style display (blue background, light text).
+
+## Color Architecture
+
+The `vcs_dir` item follows the same color pattern as Tide's built-in `_tide_item_git`:
+
+*   **`tide_vcs_dir_color` is empty** (set to `''` in `apply-tide-theme.fish`). This means `_tide_print_item` does not set a foreground color — all text colors are controlled by inline `set_color` calls within the command substitution output. This matches how `tide_git_color` is empty in Tide.
+*   **`tide_vcs_dir_bg_color`** defaults to `4E9A06` (green). The function mutates it per-render via `set -g` for unstable/urgent states. No save/restore is needed because the prompt renders in a subprocess that resets globals each time.
+*   **Repo text**: `set_color $tide_git_color_branch` (black) for icon and path, then `set_color $tide_git_color_*` (black) for each status element — matching Tide's built-in git item.
+*   **Non-repo text**: `set_color $tide_pwd_color_dirs` for the path, with bg overridden to `$tide_pwd_bg_color`.
 
 ## Configuration
 

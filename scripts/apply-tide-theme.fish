@@ -22,7 +22,11 @@ source $config
 # Replace pwd+git with our custom vcs_dir + vcs_path items
 set -U tide_left_prompt_items os context vcs_dir vcs_path newline character
 
-# vcs_path uses the same colors as pwd (steady blue background)
+# vcs_dir color must be EMPTY — like Tide's tide_git_color — so _tide_print_item
+# doesn't set a foreground; all text colors come from inline set_color calls.
+set -U tide_vcs_dir_color ''
+
+# vcs_path uses the same colors as pwd (steady blue background, light text)
 set -U tide_vcs_path_bg_color $tide_pwd_bg_color
 set -U tide_vcs_path_color $tide_pwd_color_dirs
 
