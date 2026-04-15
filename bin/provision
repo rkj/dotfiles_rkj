@@ -251,6 +251,8 @@ if command -v fish >/dev/null; then
     # Update/Install plugins from fish_plugins
     if [ -f "$DOTFILES_ROOT/config/fish/fish_plugins" ]; then
         echo "Updating Fish plugins..."
+        # Ensure _fisher_plugins is not empty to prevent file deletion bug in background tasks
+        fish -c "set -q _fisher_plugins[1] || set -U _fisher_plugins ilancosman/tide"
         fish -c "fisher update"
     fi
 
