@@ -37,12 +37,12 @@ function _tide_item_vcs_dir
             set icon "☿ "
     end
 
-    # Status counters — git/jj use git porcelain, hg is simple dirty check
+    # Status counters
     set -l bg_color $tide_vcs_dir_bg_color
     set -l status_parts
 
-    if test "$vcs_type" = git -o "$vcs_type" = jj
-        # Dirty/staged/untracked via git porcelain (works for both git and jj colocated)
+    if test "$vcs_type" = git
+        # Dirty/staged/untracked via git porcelain
         set -l stat (git --no-optional-locks status --porcelain 2>/dev/null)
         set -l conflicted (string match -r ^UU $stat | count)
         set -l staged (string match -r ^[ADMR] $stat | count)
@@ -52,17 +52,12 @@ function _tide_item_vcs_dir
         set -l behind 0
         set -l ahead 0
 
-        if test "$vcs_type" = jj
-            # JJ: outgoing = commits between trunk and working copy parent
-            set ahead (jj log --no-graph -r 'trunk()..@-' -T '"\n"' 2>/dev/null | count)
-        else
-            set -l stash (git stash list 2>/dev/null | count)
-            if git rev-list --count --left-right @{upstream}...HEAD 2>/dev/null | read -d \t -l b a
-                set behind $b
-                set ahead $a
-            end
-            test "$stash" -gt 0; and set -a status_parts "*$stash"
+        set -l stash (git stash list 2>/dev/null | count)
+        if git rev-list --count --left-right @{upstream}...HEAD 2>/dev/null | read -d \t -l b a
+            set behind $b
+            set ahead $a
         end
+        test "$stash" -gt 0; and set -a status_parts "*$stash"
 
         # Determine bg color
         if test "$conflicted" -gt 0
@@ -78,7 +73,36 @@ function _tide_item_vcs_dir
         test "$staged" -gt 0; and set -a status_parts "+$staged"
         test "$dirty" -gt 0; and set -a status_parts "!$dirty"
         test "$untracked" -gt 0; and set -a status_parts "?$untracked"
-    end
+
+    else if test "$vcs_type" = jj
+        # Use --ignore-working-copy to avoid slow snapshots in prompt
+        set -l jj_stat (jj --ignore-working-copy status --no-pager 2>/dev/null)
+        set -l jj_changes (jj --ignore-working-copy diff --summary -r @ --no-pager 2>/dev/null)
+        
+        set -l conflicted 0
+        if string match -q "*Conflict*" "$jj_stat"
+            set conflicted 1
+        end
+        
+        set -l modified (string match -r '^M ' $jj_changes | count)
+        set -l added (string match -r '^A ' $jj_changes | count)
+        set -l deleted (string match -r '^D ' $jj_changes | count)
+        
+        test "$conflicted" -gt 0; and set -a status_parts "~"
+        test "$added" -gt 0; and set -a status_parts "+$added"
+        test "$modified" -gt 0; and set -a status_parts "!$modified"
+        test "$deleted" -gt 0; and set -a status_parts "-$deleted"
+        
+        # Determine bg color
+        if test "$conflicted" -gt 0
+            set bg_color CC0000 # Red
+        else if test (count $jj_changes) -gt 0
+            set bg_color C4A000 # Yellow
+        end
+        
+        # JJ: outgoing = commits between trunk and working copy parent
+        set -l ahead (jj --ignore-working-copy log --no-graph -r 'trunk()..@-' -T '"\n"' --no-pager 2>/dev/null | count)
+        test "$ahead" -gt 0; and set -a status_parts "⇡$ahead"
 
     set -l output "$icon$repo_display"
     if test (count $status_parts) -gt 0

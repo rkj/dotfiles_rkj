@@ -60,3 +60,12 @@ source ~/.config/fish/functions/_tide_item_vcs_path.fish
 ## .gitignore Notes
 
 Tide's internal functions are gitignored via `config/fish/functions/_tide*`, but custom VCS items are excluded from that pattern via `!config/fish/functions/_tide_item_vcs_*`.
+
+NOTE: The `vcs_path` file might be ignored by `.gitignore`. Use `git add -f` if you need to commit it again.
+
+### JJ Prompt Optimization Constraint
+
+> [!IMPORTANT]
+> Any `jj` commands executed by the prompt (e.g., in `_tide_item_vcs_dir.fish`) MUST include the `--ignore-working-copy` flag.
+> This prevents `jj` from creating unwanted working copy snapshots in the background, which can significantly slow down prompt rendering.
+> Example: `jj --ignore-working-copy status --no-pager`
