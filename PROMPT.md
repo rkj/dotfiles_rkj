@@ -12,75 +12,46 @@ The prompt splits the version control system (VCS) information into two distinct
 
 1.  **Repository Block (`vcs_dir`)**:
     *   Displays the repository root path.
-    *   Displays an icon indicating the VCS type ( for Git, 🥋 for JJ, ☿ for Hg).
+    *   Displays an icon indicating the VCS type ( for Git, 🥋 for JJ, ☿ for Hg).
     *   Shows status counters: upstream arrows (⇣⇡), stash (*), conflicts (~), staged (+), dirty (!), untracked (?).
-    *   For JJ repos: ⇡ shows outgoing commits (`trunk()..@-`). Stash is git-only.
-    *   Does NOT show branch name (user always uses main).
-    *   Changes background color based on status (uses Tide's `tide_git_bg_color*` vars):
-        *   **Green** (`4E9A06`): Clean.
-        *   **Yellow** (`C4A000`): Working copy changes (dirty/staged/untracked).
-        *   **Red** (`CC0000`): Conflicts.
+    *   Does NOT show branch name.
+    *   Changes background color based on status:
+        *   **Green**: Clean.
+        *   **Yellow**: Working copy changes.
+        *   **Red**: Conflicts.
+    *   **Home Directory Handling**: If the path evaluates to exactly `~`, it uses the `tide_pwd_icon_home` or fallback `` instead of the generic folder icon.
 
 2.  **Path Block (`vcs_path`)**:
     *   Displays the subpath inside the repository (only when not at repo root).
-    *   Uses a folder icon ().
-    *   Maintains a steady Blue background (`3465A4`, same as Tide's default pwd).
+    *   Uses a folder icon ().
+    *   Maintains a steady Blue background.
 
 Outside any repo, `vcs_dir` falls back to pwd-style display (blue background, light text).
 
-## Color Architecture
+## Technical Gotchas: Width Calculation in Two-Line Prompt
 
-The `vcs_dir` item follows the same color pattern as Tide's built-in `_tide_item_git`:
+The prompt is configured as a two-line prompt, with filler dots connecting the left and right segments of the top line. This setup has a critical technical constraint regarding width calculations:
 
-*   **`tide_vcs_dir_color` is empty** (set to `''` in `apply-tide-theme.fish`). This means `_tide_print_item` does not set a foreground color — all text colors are controlled by inline `set_color` calls within the command substitution output. This matches how `tide_git_color` is empty in Tide.
-*   **`tide_vcs_dir_bg_color`** defaults to `4E9A06` (green). The function mutates it per-render via `set -g` for unstable/urgent states. No save/restore is needed because the prompt renders in a subprocess that resets globals each time.
-*   **Repo text**: `set_color $tide_git_color_branch` (black) for icon and path, then `set_color $tide_git_color_*` (black) for each status element — matching Tide's built-in git item.
-*   **Non-repo text**: `set_color $tide_pwd_color_dirs` for the path, with bg overridden to `$tide_pwd_bg_color`.
+-   In `fish_prompt.fish` (a file generated on demand and not tracked), line 79 calculates the distance between sides:
+    `math \$COLUMNS-(string length -V \"\$$prompt_var[1][1]\$$prompt_var[1][3]\")+$column_offset | read -lx dist_btwn_sides`
+-   It adds a `$column_offset` (e.g., 5) to account for theme frame characters.
+-   In the standard Tide setup, it then generates filler dots using `math max 0, \$dist_btwn_sides-\$_tide_pwd_len`. It subtracts the path length because default items use a placeholder `@PWD@` and Tide compensates for it later.
+-   **The Problem**: Our custom items like `vcs_dir` print the actual path directly, so its length is *already counted* by `string length -V`. The subtraction of `_tide_pwd_len` caused a double-counting error, leaving a wide gap.
+-   **The Solution**: We patched `fish_prompt.fish` in `scripts/apply-tide-theme.fish` to replace `-\$_tide_pwd_len` with `-$column_offset` on line 82. This cancels out the positive offset and produces the exact number of filler dots needed, avoiding over-counting and line overflow (which causes truncation).
 
 ## Configuration
 
 *   `config/fish/functions/_tide_item_vcs_dir.fish`: Detects VCS, calculates status, and renders the repo block.
 *   `config/fish/functions/_tide_item_vcs_path.fish`: Renders the subpath block.
-*   `scripts/apply-tide-theme.fish`: Restores Tide config from snapshot and applies customizations.
-*   `scripts/save-tide-config.fish`: Snapshots all Tide universal variables after `tide configure`.
-*   `scripts/tide-config.fish`: Auto-generated snapshot (committed to repo).
-*   `config/fish/fish_plugins`: Fisher plugin list (fisher + tide).
+*   `scripts/apply-tide-theme.fish`: Restores Tide config and applies customizations, including the width patch.
 
 ## Design Principles
 
-- **Portability**: This configuration is designed to be easily cloned and deployed on any machine via `./scripts/init.sh`.
-- **Self-Contained**: It should not contain any proprietary or environment-specific hardcoded values.
-- **Extensibility**: Theme settings and variables are designed to be overrideable by external scripts if needed.
-
-## Workflow
-
-After running `tide configure` to pick a base style:
-
-```fish
-# Snapshot Tide's universal variables
-fish scripts/save-tide-config.fish
-
-# Apply snapshot + customizations (vcs_dir/vcs_path items, colors)
-fish scripts/apply-tide-theme.fish
-```
-
-On a fresh machine, `./scripts/init.sh` → `bin/provision` handles everything automatically.
-
-For active panes to pick up function changes:
-```fish
-source ~/.config/fish/functions/_tide_item_vcs_dir.fish
-source ~/.config/fish/functions/_tide_item_vcs_path.fish
-```
-
-## .gitignore Notes
-
-Tide's internal functions are gitignored via `config/fish/functions/_tide*`, but custom VCS items are excluded from that pattern via `!config/fish/functions/_tide_item_vcs_*`.
-
-NOTE: The `vcs_path` file might be ignored by `.gitignore`. Use `git add -f` if you need to commit it again.
+-   **Portability**: The prompt should work on new environments after running `./scripts/init`.
+-   **Self-Contained**: The shared repository does not contain environment-specific overrides.
+-   **Patches for Portability**: If generated files like `fish_prompt.fish` need modifications, they should be patched by scripts run in `init.sh` instead of being committed.
 
 ### JJ Prompt Optimization Constraint
 
 > [!IMPORTANT]
-> Any `jj` commands executed by the prompt (e.g., in `_tide_item_vcs_dir.fish`) MUST include the `--ignore-working-copy` flag.
-> This prevents `jj` from creating unwanted working copy snapshots in the background, which can significantly slow down prompt rendering.
-> Example: `jj --ignore-working-copy status --no-pager`
+> Any `jj` commands executed by the prompt MUST include the `--ignore-working-copy` flag. This prevents `jj` from creating unwanted working copy snapshots in the background.
