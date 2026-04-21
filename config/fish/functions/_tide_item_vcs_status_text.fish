@@ -69,11 +69,10 @@ function _tide_item_vcs_status_text --argument-names target_dir
 
     else if test "$vcs_type" = jj
         set -l jj_stat (jj --ignore-working-copy status --no-pager 2>/dev/null)
-        set -l jj_changes (jj --ignore-working-copy diff --summary -r @ --no-pager 2>/dev/null)
 
         string match -q "*Conflict*" "$jj_stat"; and set conflicted 1
-        set staged (string match -r '^A ' $jj_changes | count)
-        set dirty (string match -r '^[MD] ' $jj_changes | count)
+        set staged (string match -r '^A ' $jj_stat | count)
+        set dirty (string match -r '^[MD] ' $jj_stat | count)
 
         set ahead (jj --ignore-working-copy log --no-graph -r 'trunk()..@-' -T '"\n"' --no-pager 2>/dev/null | count)
     end
