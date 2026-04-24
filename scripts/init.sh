@@ -27,6 +27,10 @@ done
 mkdir -p "$HOME/.config"
 for cfg in "$root"/config/*/; do
   name=$(basename "$cfg")
+  # kitty is handled separately below to allow per-machine kitty.conf overrides
+  if [ "$name" = "kitty" ]; then
+    continue
+  fi
   target="$HOME/.config/$name"
   if [ -d "$target" ] && [ ! -L "$target" ]; then
     echo "Warning: $target is a directory, backing up to ${target}.bak"
@@ -34,6 +38,29 @@ for cfg in "$root"/config/*/; do
   fi
   ln -nfs "$cfg" "$target"
 done
+
+# Handle kitty: real directory with symlinked files, stub kitty.conf for local overrides
+kitty_cfg="$HOME/.config/kitty"
+if [ -L "$kitty_cfg" ]; then
+  echo "Converting $kitty_cfg from symlink to directory"
+  rm "$kitty_cfg"
+fi
+mkdir -p "$kitty_cfg"
+for f in "$root/config/kitty/"*; do
+  fname=$(basename "$f")
+  if [ "$fname" != "kitty.conf" ]; then
+    ln -nfs "$f" "$kitty_cfg/$fname"
+  fi
+done
+if [ ! -e "$kitty_cfg/kitty.conf" ]; then
+  cat > "$kitty_cfg/kitty.conf" <<'EOF'
+include ${DOTFILES}/config/kitty/kitty.conf
+
+# Machine-local overrides below
+EOF
+else
+  echo "File $kitty_cfg/kitty.conf already exists"
+fi
 
 if [ ! -e "$HOME/.xmonad/xmonad.hs" ]; then
   mkdir -p "$HOME/.xmonad"

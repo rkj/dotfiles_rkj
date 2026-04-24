@@ -38,7 +38,7 @@ declare -A PKG_APT PKG_DNF BIN_APT BIN_DNF
 PKG_APT=( [fd]=fd-find  [bat]=bat )
 BIN_APT=( [fd]=fdfind   [bat]=batcat )
 PKG_DNF=( [fd]=fd-find [helix]=helix )
-BIN_DNF=( )
+BIN_DNF=( [gdu]=gdu-go )
 
 get_pkg() {
     local tool="$1" provider="$2"
@@ -156,6 +156,17 @@ function install_ai_tools() {
         if confirm_install "opencode"; then
             echo "Installing OpenCode..."
             curl -fsSL https://opencode.ai/install | bash
+        fi
+    fi
+
+    # OpenAI Codex
+    if ! command -v codex >/dev/null; then
+        if confirm_install "codex"; then
+            if command -v npm >/dev/null; then
+                npm install -g @openai/codex
+            else
+                echo "✗ npm not found, skipping codex."
+            fi
         fi
     fi
 
