@@ -68,11 +68,19 @@ function _tide_item_vcs_status_text --argument-names target_dir
         end
 
     else if test "$vcs_type" = jj
-        set -l jj_stat (jj --ignore-working-copy status --no-pager 2>/dev/null)
+        # Use git status for file state — jj --ignore-working-copy shows stale data
+        # after git commits that bypass jj snapshotting
+        set -l stat (git --no-optional-locks status --porcelain 2>/dev/null)
+        set conflicted (string match -r ^UU $stat | count)
+        set staged (string match -r ^[ADMR] $stat | count)
+        set dirty (string match -r ^.[ADMR] $stat | count)
+        set untracked (string match -r '^\?\?' $stat | count)
 
-        string match -q "*Conflict*" "$jj_stat"; and set conflicted 1
-        set staged (string match -r '^A ' $jj_stat | count)
-        set dirty (string match -r '^[MD] ' $jj_stat | count)
+        # Fall back to jj for conflict detection if git didn't find any
+        if test "$conflicted" -eq 0
+            set -l jj_stat (jj --ignore-working-copy status --no-pager 2>/dev/null)
+            string match -q "*Conflict*" "$jj_stat"; and set conflicted 1
+        end
 
         set ahead (jj --ignore-working-copy log --no-graph -r 'trunk()..@-' -T '"\n"' --no-pager 2>/dev/null | count)
     end
