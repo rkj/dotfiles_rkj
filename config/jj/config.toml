@@ -1,2 +1,6 @@
 [ui]
 editor = "hx"
+
+[experimental-advance-branches]
+enabled-branches = ["glob:*"]
+
