@@ -192,8 +192,10 @@ function install_fonts() {
     else
         if confirm_install "JetBrainsMono Nerd Font"; then
             echo "Installing JetBrainsMono Nerd Font..."
-            if command -v brew >/dev/null; then
+            if [[ "$OSTYPE" == "darwin"* ]] && command -v brew >/dev/null; then
                 brew install --cask font-jetbrains-mono-nerd-font
+            elif command -v apt-get >/dev/null; then
+                sudo apt-get install -y fonts-jetbrains-mono
             else
                 local font_dir="$HOME/.local/share/fonts"
                 mkdir -p "$font_dir"
