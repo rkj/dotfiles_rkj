@@ -6,7 +6,13 @@ set -euo pipefail
 
 # --- Configuration ---
 AUTO_CONFIRM=false
-if [[ "${1:-}" == "-y" ]]; then AUTO_CONFIRM=true; fi
+INSTALL_OPTIONAL=false
+for arg in "$@"; do
+    case "$arg" in
+        -y) AUTO_CONFIRM=true ;;
+        --optional) INSTALL_OPTIONAL=true ;;
+    esac
+done
 
 # --- Detection ---
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
@@ -239,8 +245,10 @@ try_install "jj"
 try_install "yazi"
 try_install "btop"
 try_install "gdu"
-try_install "mpv"
-try_install "sox"
+if [ "$INSTALL_OPTIONAL" = true ]; then
+    try_install "mpv"
+    try_install "sox"
+fi
 try_install "fzf"
 try_install "jq"
 try_install "bat"
