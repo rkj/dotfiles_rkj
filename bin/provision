@@ -158,7 +158,7 @@ function install_ai_tools() {
     fi
 
     # OpenCode
-    if ! command -v opencode >/dev/null; then
+    if ! command -v opencode >/dev/null && [ ! -x "$HOME/.opencode/bin/opencode" ]; then
         if confirm_install "opencode"; then
             echo "Installing OpenCode..."
             curl -fsSL https://opencode.ai/install | bash
