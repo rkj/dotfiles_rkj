@@ -252,6 +252,7 @@ fi
 try_install "fzf"
 try_install "jq"
 try_install "bat"
+try_install "glow"
 try_install "fd"
 
 # AI Tools
