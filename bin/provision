@@ -233,6 +233,7 @@ fi
 
 # Core Utilities
 try_install "helix" "hx"
+try_install "jj"
 try_install "yazi"
 try_install "btop"
 try_install "gdu"

@@ -27,8 +27,8 @@ done
 mkdir -p "$HOME/.config"
 for cfg in "$root"/config/*/; do
   name=$(basename "$cfg")
-  # kitty is handled separately below to allow per-machine kitty.conf overrides
-  if [ "$name" = "kitty" ]; then
+  # kitty and jj are handled separately below to allow per-machine config overrides
+  if [ "$name" = "kitty" ] || [ "$name" = "jj" ]; then
     continue
   fi
   target="$HOME/.config/$name"
@@ -60,6 +60,27 @@ include ${DOTFILES}/config/kitty/kitty.conf
 EOF
 else
   echo "File $kitty_cfg/kitty.conf already exists"
+fi
+
+# Handle jj: real directory with stub config.toml for per-machine identity.
+# Shared settings (ui, aliases) are loaded via the fish jj wrapper function
+# which passes --config-file $DOTFILES/config/jj/config.toml on every invocation.
+jj_cfg="$HOME/.config/jj"
+if [ -L "$jj_cfg" ]; then
+  echo "Converting $jj_cfg from symlink to directory"
+  rm "$jj_cfg"
+fi
+mkdir -p "$jj_cfg"
+if [ ! -e "$jj_cfg/config.toml" ]; then
+  cat > "$jj_cfg/config.toml" <<'EOF'
+[user]
+name = "Your Name"
+email = "your@email.com"
+
+# Machine-local overrides below
+EOF
+else
+  echo "File $jj_cfg/config.toml already exists"
 fi
 
 if [ ! -e "$HOME/.xmonad/xmonad.hs" ]; then
