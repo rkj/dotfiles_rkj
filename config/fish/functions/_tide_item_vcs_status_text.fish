@@ -12,7 +12,7 @@ function _tide_item_vcs_status_text --argument-names target_dir
     set -l repo_root ""
 
     if set -l git_root (git rev-parse --show-toplevel 2>/dev/null)
-        if test -d "$git_root/.jj"
+        if test -d "$git_root/.jj"; and type -q jj
             set vcs_type jj
         else
             set vcs_type git
