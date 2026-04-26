@@ -53,8 +53,8 @@ for f in "$root/config/kitty/"*; do
   fi
 done
 if [ ! -e "$kitty_cfg/kitty.conf" ]; then
-  cat > "$kitty_cfg/kitty.conf" <<'EOF'
-include ${DOTFILES}/config/kitty/kitty.conf
+  cat > "$kitty_cfg/kitty.conf" <<EOF
+include ${root}/config/kitty/kitty.conf
 
 # Machine-local overrides below
 EOF
