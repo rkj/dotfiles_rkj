@@ -1,5 +1,6 @@
 function _tide_item_vcs_status_text --argument-names target_dir
-    set -l home_regex (string escape --style=regex $HOME)
+    set -l real_home (readlink -f $HOME 2>/dev/null; or echo $HOME)
+    set -l home_regex (string escape --style=regex $real_home)
 
     # Save current directory and switch to target if provided
     set -l old_pwd $PWD

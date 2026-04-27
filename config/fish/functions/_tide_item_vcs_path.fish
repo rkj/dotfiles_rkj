@@ -11,7 +11,7 @@ function _tide_item_vcs_path
         return
     end
 
-    set -l subpath (string replace "$repo_root" '' $PWD | string trim -l -c /)
+    set -l subpath (git rev-parse --show-prefix 2>/dev/null | string trim -r -c /)
     if test -z "$subpath"
         return
     end

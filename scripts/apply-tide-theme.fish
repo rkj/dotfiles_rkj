@@ -1,38 +1,40 @@
 #!/usr/bin/env fish
-# Apply the Tide theme from the committed snapshot, then layer on customizations.
+# Apply the Tide theme and custom prompt items.
 #
-# Workflow:
-#   1. Run `tide configure` to pick your base style.
-#   2. Run `fish scripts/save-tide-config.fish` to snapshot.
-#   3. This script restores that snapshot + applies custom prompt items.
-
-set -l script_dir (status dirname)
-set -l config "$script_dir/tide-config.fish"
-
-if not test -f $config
-    echo "Error: $config not found. Run save-tide-config.fish first." >&2
-    return 1
-end
+# Uses `tide configure --auto` so there's no snapshot file to maintain.
+# Re-run this script whenever you want to reset to the canonical theme.
 
 echo "Applying Tide config..."
-source $config
+tide configure --auto \
+    --style=Rainbow \
+    --prompt_colors='True color' \
+    --show_time='24-hour format' \
+    --rainbow_prompt_separators=Angled \
+    --powerline_prompt_heads=Round \
+    --powerline_prompt_tails=Flat \
+    --powerline_prompt_style='Two lines, character' \
+    --prompt_connection=Dotted \
+    --powerline_right_prompt_frame=No \
+    --prompt_connection_andor_frame_color=Darkest \
+    --prompt_spacing=Sparse \
+    --icons='Many icons' \
+    --transient=No
 
 # --- Customizations on top of the base Tide config ---
 
 # Replace pwd+git with our custom vcs_dir + vcs_path items
 set -U tide_left_prompt_items os context vcs_dir vcs_path newline character
 
-# vcs_dir color must be EMPTY — like Tide's tide_git_color — so _tide_print_item
-# doesn't set a foreground; all text colors come from inline set_color calls.
-set -e tide_vcs_dir_color
+# vcs_dir foreground must be unset — _tide_print_item would otherwise override
+# the inline set_color calls that color the VCS text.
+set -eU tide_vcs_dir_color
 
-# vcs_path uses the same colors as pwd (steady blue background, light text)
+# vcs_path uses the same colors as pwd
 set -U tide_vcs_path_bg_color $tide_pwd_bg_color
 set -U tide_vcs_path_color $tide_pwd_color_dirs
 
 # Conditionally filter right prompt items for work environments
 if test "$DOTFILES_IS_WORK" = true
-    # Remove ruby and gcloud for work environments
     set -l filtered
     for item in $tide_right_prompt_items
         if not contains -- $item ruby gcloud
@@ -42,19 +44,16 @@ if test "$DOTFILES_IS_WORK" = true
     set -U tide_right_prompt_items $filtered
 end
 
-# Re-run Tide's item filter to update _tide_left_items / _tide_right_items
-if functions -q _tide_remove_unusable_items
-    _tide_remove_unusable_items
-end
+# Update _tide_left/right_items directly — tide reload calls fish_prompt.fish
+# which exits early in non-interactive subprocesses, so _tide_remove_unusable_items
+# would never run and these cached vars would stay stale.
+_tide_remove_unusable_items
 
-if command -v tide >/dev/null
-    tide reload
-end
+tide reload
 
 # Patch fish_prompt.fish to fix width calculation for custom items
 set -l prompt_file ~/.config/fish/functions/fish_prompt.fish
 if test -f $prompt_file
-    echo "Applying patch to fish_prompt.fish for width calculation..."
     sed -i 's/-\\\$_tide_pwd_len/-$column_offset/g' $prompt_file
 end
 
