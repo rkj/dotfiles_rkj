@@ -4,3 +4,6 @@ editor = "hx"
 [experimental-advance-branches]
 enabled-branches = ["glob:*"]
 
+[snapshot]
+auto-update-stale = true
+
