@@ -54,7 +54,11 @@ tide reload
 # Patch fish_prompt.fish to fix width calculation for custom items
 set -l prompt_file ~/.config/fish/functions/fish_prompt.fish
 if test -f $prompt_file
-    sed -i 's/-\\\$_tide_pwd_len/-$column_offset/g' $prompt_file
+    if test (uname) = "Darwin"
+        sed -i '' 's/-\\\$_tide_pwd_len/-$column_offset/g' $prompt_file
+    else
+        sed -i 's/-\\\$_tide_pwd_len/-$column_offset/g' $prompt_file
+    end
 end
 
 echo "✓ Theme applied."
