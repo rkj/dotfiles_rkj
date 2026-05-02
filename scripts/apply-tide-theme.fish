@@ -4,6 +4,9 @@
 # Uses `tide configure --auto` so there's no snapshot file to maintain.
 # Re-run this script whenever you want to reset to the canonical theme.
 
+echo "Applying Dracula color theme..."
+fish_config theme choose Dracula
+
 echo "Applying Tide config..."
 tide configure --auto \
     --style=Rainbow \
