@@ -26,7 +26,11 @@ tide configure --auto \
 # --- Customizations on top of the base Tide config ---
 
 # Replace pwd+git with our custom vcs_dir + vcs_path items
-set -U tide_left_prompt_items os context vcs_dir vcs_path newline character
+set -U tide_left_prompt_items os context shpool vcs_dir vcs_path newline character
+
+set -U tide_shpool_bg_color bd93f9
+set -U tide_shpool_color 000000
+
 
 # vcs_dir foreground must be unset — _tide_print_item would otherwise override
 # the inline set_color calls that color the VCS text.
