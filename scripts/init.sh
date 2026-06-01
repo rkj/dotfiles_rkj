@@ -63,14 +63,17 @@ else
 fi
 
 # Handle jj: real directory with stub config.toml for per-machine identity.
-# Shared settings (ui, aliases) are loaded via the fish jj wrapper function
-# which passes --config-file $DOTFILES/config/jj/config.toml on every invocation.
+# Shared settings (ui, aliases) are loaded natively via ~/.config/jj/conf.d/10-personal.toml
 jj_cfg="$HOME/.config/jj"
 if [ -L "$jj_cfg" ]; then
   echo "Converting $jj_cfg from symlink to directory"
   rm "$jj_cfg"
 fi
-mkdir -p "$jj_cfg"
+mkdir -p "$jj_cfg/conf.d"
+
+# Clean up legacy broken nested symlink if any
+rm -f "$jj_cfg/jj"
+
 if [ ! -e "$jj_cfg/config.toml" ]; then
   cat > "$jj_cfg/config.toml" <<'EOF'
 [user]
@@ -82,6 +85,9 @@ EOF
 else
   echo "File $jj_cfg/config.toml already exists"
 fi
+
+# Link personal shared config
+ln -nfs "$root/config/jj/config.toml" "$jj_cfg/conf.d/10-personal.toml"
 
 if [ ! -e "$HOME/.xmonad/xmonad.hs" ]; then
   mkdir -p "$HOME/.xmonad"
