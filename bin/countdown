@@ -2,7 +2,11 @@
 start="$(( $(date '+%s') + $1))"
 while [ $start -ge $(date +%s) ]; do
   time="$(( $start - $(date +%s) ))"
-  printf '%s\r' "$(date -u -d "@$time" +%H:%M:%S)"
+  if [[ "$(uname)" == "Darwin" ]]; then
+    printf '%s\r' "$(date -u -r "$time" +%H:%M:%S)"
+  else
+    printf '%s\r' "$(date -u -d "@$time" +%H:%M:%S)"
+  fi
   sleep 0.1
 done
 
