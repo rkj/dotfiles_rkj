@@ -7,6 +7,22 @@ root="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$root"
 root="$(pwd)"
 
+show_help() {
+  echo "Usage: init.sh [options]"
+  echo "Options:"
+  echo "  -y          Auto-confirm installations (except Homebrew)"
+  echo "  --help, -h  Show this help message"
+}
+
+for arg in "$@"; do
+  case "$arg" in
+    -h|--help)
+      show_help
+      exit 0
+      ;;
+  esac
+done
+
 # Make stub files.
 for stub in "$root"/stubs/*; do
   file="$(basename "$stub")"
@@ -157,4 +173,4 @@ fi
 
 echo ""
 echo "--- Installing tools ---"
-"$root/bin/provision"
+"$root/bin/provision" "$@"

@@ -7,10 +7,20 @@ set -euo pipefail
 # --- Configuration ---
 AUTO_CONFIRM=false
 INSTALL_OPTIONAL=false
+
+show_help() {
+    echo "Usage: provision [options]"
+    echo "Options:"
+    echo "  -y          Auto-confirm installations (except Homebrew)"
+    echo "  --optional  Install optional packages"
+    echo "  --help, -h  Show this help message"
+}
+
 for arg in "$@"; do
     case "$arg" in
         -y) AUTO_CONFIRM=true ;;
         --optional) INSTALL_OPTIONAL=true ;;
+        --help|-h) show_help; exit 0 ;;
     esac
 done
 
@@ -67,7 +77,8 @@ get_bin() {
 # --- Rule-Based Providers ---
 function confirm_install() {
     local name="$1"
-    if [ "$AUTO_CONFIRM" = true ]; then return 0; fi
+    local force_ask="${2:-false}"
+    if [ "$AUTO_CONFIRM" = true ] && [ "$force_ask" != "true" ]; then return 0; fi
     read -p "Install $name? [y/N] " -n 1 -r
     echo
     [[ $REPLY =~ ^[Yy]$ ]]
@@ -227,7 +238,7 @@ if ! command -v brew >/dev/null; then
     else
         echo "Some tools (helix, yazi) are only available via brew."
     fi
-    if confirm_install "homebrew"; then
+    if confirm_install "homebrew" "true"; then
         /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
         # Add brew to current session PATH
         if [ -x /home/linuxbrew/.linuxbrew/bin/brew ]; then
@@ -240,6 +251,7 @@ if ! command -v brew >/dev/null; then
 fi
 
 # Core Utilities
+try_install "fish"
 try_install "helix" "hx"
 try_install "jj"
 try_install "yazi"
