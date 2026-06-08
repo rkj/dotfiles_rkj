@@ -7,3 +7,6 @@ enabled-branches = ["glob:*"]
 [snapshot]
 auto-update-stale = true
 
+[aliases]
+tug = ["bookmark", "move", "--from", "heads(::@- & bookmarks())", "--to", "@-"]
+
