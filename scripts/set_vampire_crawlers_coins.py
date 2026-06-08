@@ -10,10 +10,12 @@ The checksum is SHA-1 over the UTF-8 bytes of the standalone Data JSON
 is indented by an extra 2 spaces, so we strip those before hashing.
 
 Usage:
-  python set_coins.py <save_file> <coins>
+  python set_vampire_crawlers_coins.py <save_file> --coins <coins>
+  python set_vampire_crawlers_coins.py <save_file> --fix-checksum
 
 Example:
-  python set_coins.py SaveProfile0.save 200000
+  python set_vampire_crawlers_coins.py SaveProfile0.save --coins 200000
+  python set_vampire_crawlers_coins.py SaveProfile0.save --fix-checksum
 """
 
 import argparse
@@ -58,33 +60,53 @@ def compute_checksum(wrapped_content: str) -> str:
     return base64.b64encode(digest).decode()
 
 
-def set_coins(save_path: str, coins: int) -> None:
-    """Patch TotalCoins in a save file and rewrite a valid checksum.
+def update_checksum(content: str) -> tuple[str, str]:
+    """Rewrite the wrapper checksum and return the updated content/checksum."""
+    new_checksum = compute_checksum(content)
+    content, replacements = re.subn(
+        r'("Checksum": )"[^"]*"',
+        rf'\1"{new_checksum}"',
+        content,
+        count=1,
+    )
+    if replacements != 1:
+        raise ValueError("Malformed save file: expected exactly one Checksum field.")
 
-    Modifies the file in-place. The original file is not backed up here;
-    the game already maintains its own .bak files.
+    return content, new_checksum
+
+
+def set_coins(content: str, coins: int) -> str:
+    """Patch TotalCoins in wrapped save content.
+
+    Replaces every "TotalCoins" occurrence because ProfileSaveData and
+    ProgressionSaveData both carry this field.
 
     Args:
-        save_path: Path to the .save file (e.g. SaveProfile0.save).
-        coins:     New TotalCoins value to write.
+        content: Wrapped save file content.
+        coins:   New TotalCoins value to write.
     """
-    with open(save_path, 'r', newline='') as fh:
-        content = fh.read()
-
-    # Replace every "TotalCoins" occurrence (ProfileSaveData and
-    # ProgressionSaveData both carry this field).
     original_matches = re.findall(r'"TotalCoins": \d+', content)
     if not original_matches:
-        sys.exit(f"Error: no TotalCoins field found in {save_path!r}.")
+        raise ValueError("No TotalCoins field found.")
 
     content = re.sub(r'("TotalCoins": )\d+', rf'\g<1>{coins}', content)
     print(f"Updated {len(original_matches)} TotalCoins field(s): "
           f"{original_matches[0]} → {coins}")
 
-    # Recompute and patch the checksum.
-    new_checksum = compute_checksum(content)
-    content = re.sub(r'("Checksum": )"[^"]*"', rf'\1"{new_checksum}"', content)
-    print(f"Checksum updated: {new_checksum}")
+    return content
+
+
+def patch_save(save_path: str, coins: int | None, fix_checksum: bool) -> None:
+    """Modify a save file in-place according to the requested operations."""
+    with open(save_path, 'r', newline='') as fh:
+        content = fh.read()
+
+    if coins is not None:
+        content = set_coins(content, coins)
+
+    if coins is not None or fix_checksum:
+        content, new_checksum = update_checksum(content)
+        print(f"Checksum updated: {new_checksum}")
 
     with open(save_path, 'w', newline='') as fh:
         fh.write(content)
@@ -93,23 +115,34 @@ def set_coins(save_path: str, coins: int) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Set TotalCoins in a Vampire Crawlers .save file.",
+        description="Patch a Vampire Crawlers .save file.",
     )
     parser.add_argument(
         'save_path',
         help="Path to the .save file (e.g. SaveProfile0.save).",
     )
     parser.add_argument(
-        'coins',
+        '--coins',
         type=int,
-        help="New coin total to write (e.g. 200000).",
+        help="New TotalCoins value to write (e.g. 200000).",
+    )
+    parser.add_argument(
+        '--fix-checksum',
+        action='store_true',
+        help="Rewrite Checksum for the current Data block without changing coins.",
     )
     args = parser.parse_args()
 
-    if args.coins < 0:
-        sys.exit("Error: coins must be a non-negative integer.")
+    if args.coins is None and not args.fix_checksum:
+        parser.error("specify --coins or --fix-checksum")
 
-    set_coins(args.save_path, args.coins)
+    if args.coins is not None and args.coins < 0:
+        parser.error("--coins must be a non-negative integer")
+
+    try:
+        patch_save(args.save_path, args.coins, args.fix_checksum)
+    except ValueError as exc:
+        sys.exit(f"Error: {exc}")
 
 
 if __name__ == '__main__':
