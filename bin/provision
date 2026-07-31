@@ -254,6 +254,7 @@ fi
 try_install "fish"
 try_install "helix" "hx"
 try_install "jj"
+try_install "zellij"
 try_install "yazi"
 try_install "btop"
 try_install "gdu"

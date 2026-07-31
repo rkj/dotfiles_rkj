@@ -40,11 +40,13 @@ for link in "$root"/links/*; do
 done
 
 # Update ~/.config symlinks (config/<name> -> ~/.config/<name>)
+# Configs handled separately with dedicated local overrides or layering
+CUSTOM_CONFIGS=" kitty jj zellij "
+
 mkdir -p "$HOME/.config"
 for cfg in "$root"/config/*/; do
   name=$(basename "$cfg")
-  # kitty and jj are handled separately below to allow per-machine config overrides
-  if [ "$name" = "kitty" ] || [ "$name" = "jj" ]; then
+  if [[ "$CUSTOM_CONFIGS" == *" $name "* ]]; then
     continue
   fi
   target="$HOME/.config/$name"
@@ -76,6 +78,25 @@ include ${root}/config/kitty/kitty.conf
 EOF
 else
   echo "File $kitty_cfg/kitty.conf already exists"
+fi
+
+# Handle zellij: real directory with symlinked files, base config.kdl for local overrides
+zellij_cfg="$HOME/.config/zellij"
+if [ -L "$zellij_cfg" ]; then
+  echo "Converting $zellij_cfg from symlink to directory"
+  rm "$zellij_cfg"
+fi
+mkdir -p "$zellij_cfg"
+for f in "$root/config/zellij/"*; do
+  fname=$(basename "$f")
+  if [ "$fname" != "config.kdl" ] && [ -e "$f" ]; then
+    ln -nfs "$f" "$zellij_cfg/$fname"
+  fi
+done
+if [ ! -e "$zellij_cfg/config.kdl" ]; then
+  cp "$root/config/zellij/config.kdl" "$zellij_cfg/config.kdl"
+else
+  echo "File $zellij_cfg/config.kdl already exists"
 fi
 
 # Handle jj: real directory with stub config.toml for per-machine identity.
