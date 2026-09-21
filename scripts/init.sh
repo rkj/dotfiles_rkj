@@ -1,24 +1,36 @@
 #!/bin/bash
 # It's ok to call this script multiple times, it will update all the links
 # to the newest version and create any new stubs.
+set -e
+shopt -s nullglob
 
 # Find proper path
 root="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$root"
 root="$(pwd)"
 
+RUN_PROVISION=true
+
 show_help() {
   echo "Usage: init.sh [options]"
   echo "Options:"
-  echo "  -y          Auto-confirm installations (except Homebrew)"
-  echo "  --help, -h  Show this help message"
+  echo "  -y              Auto-confirm installations (except Homebrew)"
+  echo "  --no-provision  Only configure symlinks and stubs; skip package provisioning"
+  echo "  --help, -h      Show this help message"
 }
 
+provision_args=()
 for arg in "$@"; do
   case "$arg" in
     -h|--help)
       show_help
       exit 0
+      ;;
+    --no-provision)
+      RUN_PROVISION=false
+      ;;
+    *)
+      provision_args+=("$arg")
       ;;
   esac
 done
@@ -45,6 +57,7 @@ CUSTOM_CONFIGS=" kitty jj zellij "
 
 mkdir -p "$HOME/.config"
 for cfg in "$root"/config/*/; do
+  cfg="${cfg%/}"
   name=$(basename "$cfg")
   if [[ "$CUSTOM_CONFIGS" == *" $name "* ]]; then
     continue
@@ -192,6 +205,8 @@ available in the environment when the tmux server starts.
 EOQ
 fi
 
-echo ""
-echo "--- Installing tools ---"
-"$root/bin/provision" "$@"
+if [ "$RUN_PROVISION" = true ]; then
+  echo ""
+  echo "--- Installing tools ---"
+  "$root/bin/provision" "${provision_args[@]}"
+fi
