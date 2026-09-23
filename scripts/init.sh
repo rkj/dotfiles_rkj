@@ -157,9 +157,15 @@ if ! grep -q "^export DOTFILES=" "$profile_path" 2>/dev/null; then
   echo '[ -f $DOTFILES/includes/profile.sh ] && source $DOTFILES/includes/profile.sh' >> "$profile_path"
   echo "Added DOTFILES to ~/.profile"
 else
-  # Update existing DOTFILES line if path changed.
-  sed -i "s|^export DOTFILES=.*|export DOTFILES=$escaped_root|" "$profile_path"
-  echo "DOTFILES already in ~/.profile (updated path)"
+  if [ -L "$profile_path" ]; then
+    echo "DOTFILES already in ~/.profile (symlink)"
+  else
+    # Update existing DOTFILES line if path changed (portable across GNU/BSD sed).
+    tmp_profile="$(mktemp)"
+    sed "s|^export DOTFILES=.*|export DOTFILES=$escaped_root|" "$profile_path" > "$tmp_profile"
+    mv "$tmp_profile" "$profile_path"
+    echo "DOTFILES already in ~/.profile (updated path)"
+  fi
 fi
 
 mkdir -p ~/.vim/{tmp,backup}
