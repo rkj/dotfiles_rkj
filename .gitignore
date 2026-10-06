@@ -15,6 +15,5 @@ env.local
 !stubs/env.local
 !config/fish/functions/_tide_item_vcs_*
 !config/fish/functions/_tide_item_shpool.fish
-
-
+config/yabai/local.sh
 

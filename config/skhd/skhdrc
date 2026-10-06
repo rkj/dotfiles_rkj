@@ -1,0 +1,83 @@
+# -----------------------------------------------------------------------------
+# skhd configuration for yabai
+#
+# Uses `hyper` (ctrl + alt + cmd + shift) as the primary modifier to match
+# existing Rectangle Pro muscle memory (hyper + h/j/k/l) and avoid stealing
+# Option/Alt (`alt`) from Kitty (`macos_option_as_alt yes`), Zellij, and Helix.
+# -----------------------------------------------------------------------------
+
+# --- Focus Window (cycles stack in `stack` mode; crosses displays at edge) ---
+hyper - h : yabai -m window --focus west  || yabai -m display --focus west
+hyper - j : yabai -m window --focus south || yabai -m window --focus stack.next || yabai -m window --focus stack.first || yabai -m display --focus south
+hyper - k : yabai -m window --focus north || yabai -m window --focus stack.prev || yabai -m window --focus stack.last  || yabai -m display --focus north
+hyper - l : yabai -m window --focus east  || yabai -m display --focus east
+
+# --- Swap Window Position (ctrl + alt + h/j/k/l) ---
+ctrl + alt - h : yabai -m window --swap west  || (yabai -m window --display west  && yabai -m display --focus west)
+ctrl + alt - j : yabai -m window --swap south || (yabai -m window --display south && yabai -m display --focus south)
+ctrl + alt - k : yabai -m window --swap north || (yabai -m window --display north && yabai -m display --focus north)
+ctrl + alt - l : yabai -m window --swap east  || (yabai -m window --display east  && yabai -m display --focus east)
+
+# --- Warp Window into BSP Split (ctrl + alt + cmd + h/j/k/l) ---
+ctrl + alt + cmd - h : yabai -m window --warp west
+ctrl + alt + cmd - j : yabai -m window --warp south
+ctrl + alt + cmd - k : yabai -m window --warp north
+ctrl + alt + cmd - l : yabai -m window --warp east
+
+# --- Layout & Zoom (Replacing Rectangle Pro half/center/maximize actions) ---
+# Toggle space between `stack` (single fullscreen window) and `bsp` (tiling)
+hyper - space : yabai -m space --layout $(yabai -m query --spaces --space | jq -r 'if .type == "bsp" then "stack" else "bsp" end')
+
+# Flip split orientation (side-by-side <-> top-to-bottom)
+hyper - e : yabai -m window --toggle split
+
+# Rotate entire space tree 90 degrees
+hyper - r : yabai -m space --rotate 90
+
+# Mirror space left/right or top/bottom
+hyper - y : yabai -m space --mirror y-axis
+hyper - x : yabai -m space --mirror x-axis
+
+# Give focused window 75% of split (`hyper - s`), or balance all to 50/50 (`hyper - 0`)
+hyper - s : yabai -m window --ratio abs:0.75
+hyper - 0 : yabai -m space --balance
+
+# Toggle fullscreen zoom (or parent split zoom)
+hyper - f : yabai -m window --toggle zoom-fullscreen
+hyper - d : yabai -m window --toggle zoom-parent
+
+# Toggle float and center window (replaces Rectangle Pro's hyper-k / hyper-j center)
+hyper - t : yabai -m window --toggle float --grid 4:4:1:1:2:2
+hyper - c : yabai -m window --toggle float --grid 1:6:1:0:4:1
+
+# --- Focus Prev / Next Space ---
+# Note: `yabai -m space --focus` requires SIP disabled (Scripting Addition).
+# Falling back to `skhd -k "ctrl - left/right"` uses macOS's native Mission Control
+# space switching so this works even with SIP enabled.
+hyper - p     : yabai -m space --focus prev || skhd -k "ctrl - left"
+hyper - n     : yabai -m space --focus next || skhd -k "ctrl - right"
+hyper - left  : yabai -m space --focus prev || skhd -k "ctrl - left"
+hyper - right : yabai -m space --focus next || skhd -k "ctrl - right"
+
+# --- Move Focused Window to Prev / Next Space and Follow Focus ---
+ctrl + alt - p     : yabai -m window --space prev && (yabai -m space --focus prev || skhd -k "ctrl - left")
+ctrl + alt - n     : yabai -m window --space next && (yabai -m space --focus next || skhd -k "ctrl - right")
+ctrl + alt - left  : yabai -m window --space prev && (yabai -m space --focus prev || skhd -k "ctrl - left")
+ctrl + alt - right : yabai -m window --space next && (yabai -m space --focus next || skhd -k "ctrl - right")
+
+# --- Move Focused Window to Space 1..6 ---
+ctrl + alt - 1 : yabai -m window --space 1
+ctrl + alt - 2 : yabai -m window --space 2
+ctrl + alt - 3 : yabai -m window --space 3
+ctrl + alt - 4 : yabai -m window --space 4
+ctrl + alt - 5 : yabai -m window --space 5
+ctrl + alt - 6 : yabai -m window --space 6
+
+# --- Focus Display 1..3 directly (3-monitor setup) ---
+hyper - 1 : yabai -m display --focus 1
+hyper - 2 : yabai -m display --focus 2
+hyper - 3 : yabai -m display --focus 3
+
+# --- Resize Windows (0x1B = '-', 0x18 = '=') ---
+ctrl + alt - 0x1B : yabai -m window --resize left:20:0  || yabai -m window --resize right:-20:0
+ctrl + alt - 0x18 : yabai -m window --resize left:-20:0 || yabai -m window --resize right:20:0
