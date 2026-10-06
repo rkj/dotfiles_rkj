@@ -7,6 +7,10 @@
 echo "Applying Dracula color theme..."
 fish_config theme choose Dracula
 
+if not contains -- no-query-term $fish_features
+    set -Ua fish_features no-query-term
+end
+
 echo "Applying Tide config..."
 tide configure --auto \
     --style=Rainbow \

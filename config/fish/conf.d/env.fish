@@ -1,3 +1,7 @@
+if not contains -- no-query-term $fish_features
+    set -Ua fish_features no-query-term
+end
+
 # Bootstrap DOTFILES from this file's symlink path if not already set.
 # This file lives at $DOTFILES/config/fish/conf.d/env.fish, symlinked
 # from ~/.config/fish/conf.d/env.fish, so we can resolve it.
