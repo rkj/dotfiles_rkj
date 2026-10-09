@@ -26,7 +26,11 @@ ctrl + alt + cmd - l : yabai -m window --warp east
 
 # --- Layout & Zoom (Replacing Rectangle Pro half/center/maximize actions) ---
 # Toggle space between `stack` (single fullscreen window) and `bsp` (tiling)
-hyper - space : yabai -m space --layout $(yabai -m query --spaces --space | jq -r 'if .type == "bsp" then "stack" else "bsp" end')
+hyper - space : space_info="$(yabai -m query --spaces --space)" && \
+                idx="$(printf '%s' "$space_info" | jq -r '.index')" && \
+                next_layout="$(printf '%s' "$space_info" | jq -r 'if .type == "bsp" then "stack" else "bsp" end')" && \
+                printf '%s\n' "$idx" >> "/tmp/yabai_manual_override_${USER:-rkj}" && \
+                yabai -m space --layout "$next_layout"
 
 # Flip split orientation (side-by-side <-> top-to-bottom)
 hyper - e : yabai -m window --toggle split

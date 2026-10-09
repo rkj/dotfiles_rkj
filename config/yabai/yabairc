@@ -9,11 +9,12 @@ yabai -m config normal_window_opacity 0.7
 
 # Keep space labels (main1..N, left, right), layouts, and window rules in sync
 SYNC_SCRIPT="$HOME/.config/yabai/sync-layout.sh"
-yabai -m signal --add event=display_added   label="sync_display_add"     action="$SYNC_SCRIPT"
-yabai -m signal --add event=display_removed label="sync_display_remove"  action="$SYNC_SCRIPT"
-yabai -m signal --add event=space_created   label="sync_space_create"    action="$SYNC_SCRIPT"
-yabai -m signal --add event=space_destroyed label="sync_space_destroy"   action="$SYNC_SCRIPT"
+yabai -m signal --add event=display_added   label="sync_display_add"     action="$SYNC_SCRIPT display"
+yabai -m signal --add event=display_removed label="sync_display_remove"  action="$SYNC_SCRIPT display"
+yabai -m signal --add event=space_created   label="sync_space_create"    action="$SYNC_SCRIPT space_count"
+yabai -m signal --add event=space_destroyed label="sync_space_destroy"   action="$SYNC_SCRIPT space_count"
+yabai -m signal --add event=space_changed   label="sync_space_changed"   action="$SYNC_SCRIPT space_changed"
 
 if [ -x "$SYNC_SCRIPT" ]; then
-  "$SYNC_SCRIPT"
+  "$SYNC_SCRIPT" init
 fi
