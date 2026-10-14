@@ -85,3 +85,6 @@ hyper - 3 : yabai -m display --focus 3
 # --- Resize Windows (0x1B = '-', 0x18 = '=') ---
 ctrl + alt - 0x1B : yabai -m window --resize left:20:0  || yabai -m window --resize right:-20:0
 ctrl + alt - 0x18 : yabai -m window --resize left:-20:0 || yabai -m window --resize right:20:0
+
+# --- Restart yabai & reload skhd (if an app crashes/restores unmanaged windows) ---
+hyper - backspace : yabai --restart-service && skhd -r

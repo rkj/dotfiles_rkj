@@ -13,21 +13,20 @@ OVERRIDE_FILE="/tmp/yabai_manual_override_${USER:-rkj}"
 RESTART_FILE="/tmp/yabai_last_restart_${USER:-rkj}"
 EVENT_TYPE="${1:-init}"
 
-# When displays are added/removed, give macOS WindowServer a moment to finish
-# migrating spaces across displays before querying geometry.
-if [ "$EVENT_TYPE" = "display" ]; then
+# When displays are added/removed or an app launches, give macOS a moment to settle
+if [ "$EVENT_TYPE" = "display" ] || [ "$EVENT_TYPE" = "app_launched" ]; then
   sleep 1
 fi
 
 DISPLAYS_JSON="$(yabai -m query --displays 2>/dev/null)" || exit 0
 SPACES_JSON="$(yabai -m query --spaces 2>/dev/null)" || exit 0
 
-# If any window on a currently visible space lost its macOS Accessibility reference
-# (e.g. Chrome or Chrome PWAs showing as `app_mode_loader` after sleep/reconnect),
+# If any Chrome PWA window shows up as unresolved `app_mode_loader` (which happens
+# after Chrome crashes/restarts or wakes from sleep with `has-ax-reference: false`),
 # restart yabai once (with a 15s cooldown) so yabai re-resolves all AX references.
 if [ "$EVENT_TYPE" != "init" ]; then
-  BROKEN_AX="$(yabai -m query --windows 2>/dev/null | jq '[.[] | select(."is-visible" == true and ."has-ax-reference" == false and .role != "AXHelpTag")] | length')"
-  if [ "${BROKEN_AX:-0}" -gt 0 ]; then
+  BROKEN_PWA="$(yabai -m query --windows 2>/dev/null | jq '[.[] | select(.app == "app_mode_loader" or (."has-ax-reference" == false and .app == "Google Chrome"))] | length')"
+  if [ "${BROKEN_PWA:-0}" -gt 0 ]; then
     NOW="$(date +%s)"
     LAST_RESTART="$(cat "$RESTART_FILE" 2>/dev/null || echo 0)"
     if [ $((NOW - LAST_RESTART)) -gt 15 ]; then
