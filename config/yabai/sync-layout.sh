@@ -20,12 +20,13 @@ fi
 
 DISPLAYS_JSON="$(yabai -m query --displays 2>/dev/null)" || exit 0
 SPACES_JSON="$(yabai -m query --spaces 2>/dev/null)" || exit 0
+WINDOWS_JSON="$(yabai -m query --windows 2>/dev/null)" || exit 0
 
 # If any Chrome PWA window shows up as unresolved `app_mode_loader` (which happens
 # after Chrome crashes/restarts or wakes from sleep with `has-ax-reference: false`),
 # restart yabai once (with a 15s cooldown) so yabai re-resolves all AX references.
 if [ "$EVENT_TYPE" != "init" ]; then
-  BROKEN_PWA="$(yabai -m query --windows 2>/dev/null | jq '[.[] | select(.app == "app_mode_loader" or (."has-ax-reference" == false and .app == "Google Chrome"))] | length')"
+  BROKEN_PWA="$(printf '%s' "$WINDOWS_JSON" | jq '[.[] | select(.app == "app_mode_loader" or (."has-ax-reference" == false and .app == "Google Chrome"))] | length')"
   if [ "${BROKEN_PWA:-0}" -gt 0 ]; then
     NOW="$(date +%s)"
     LAST_RESTART="$(cat "$RESTART_FILE" 2>/dev/null || echo 0)"
@@ -116,12 +117,12 @@ else
       sync_visible_space "$right_space" "stack"
     fi
   fi
+fi
 
-  # On display/space count change, refresh window placement rules
-  if [ "$EVENT_TYPE" != "space_changed" ] || [ "$CURRENT_MODE" != "$PREV_MODE" ]; then
-    if [ -f "$HOME/.config/yabai/local.sh" ]; then
-      . "$HOME/.config/yabai/local.sh"
-    fi
-    yabai -m rule --apply 2>/dev/null || true
+# Refresh and apply window rules in both single-monitor and multi-monitor modes
+if [ "$EVENT_TYPE" != "space_changed" ] || [ "$CURRENT_MODE" != "$PREV_MODE" ]; then
+  if [ -f "$HOME/.config/yabai/local.sh" ]; then
+    . "$HOME/.config/yabai/local.sh"
   fi
+  yabai -m rule --apply 2>/dev/null || true
 fi

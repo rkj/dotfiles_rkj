@@ -12,11 +12,11 @@ hyper - j : yabai -m window --focus south || yabai -m window --focus stack.next 
 hyper - k : yabai -m window --focus north || yabai -m window --focus stack.prev || yabai -m window --focus stack.last  || yabai -m display --focus north
 hyper - l : yabai -m window --focus east  || yabai -m display --focus east
 
-# --- Swap Window Position (ctrl + alt + h/j/k/l) ---
-ctrl + alt - h : yabai -m window --swap west  || (yabai -m window --display west  && yabai -m display --focus west)
-ctrl + alt - j : yabai -m window --swap south || (yabai -m window --display south && yabai -m display --focus south)
-ctrl + alt - k : yabai -m window --swap north || (yabai -m window --display north && yabai -m display --focus north)
-ctrl + alt - l : yabai -m window --swap east  || (yabai -m window --display east  && yabai -m display --focus east)
+# --- Swap Window Position (or move to adjacent display at screen edge) ---
+ctrl + alt - h : [ "$(yabai -m query --windows --window | jq '.display')" = "$(yabai -m query --windows --window west  2>/dev/null | jq '.display')" ] && yabai -m window --swap west  || (yabai -m window --display west  && yabai -m display --focus west)
+ctrl + alt - j : [ "$(yabai -m query --windows --window | jq '.display')" = "$(yabai -m query --windows --window south 2>/dev/null | jq '.display')" ] && yabai -m window --swap south || (yabai -m window --display south && yabai -m display --focus south)
+ctrl + alt - k : [ "$(yabai -m query --windows --window | jq '.display')" = "$(yabai -m query --windows --window north 2>/dev/null | jq '.display')" ] && yabai -m window --swap north || (yabai -m window --display north && yabai -m display --focus north)
+ctrl + alt - l : [ "$(yabai -m query --windows --window | jq '.display')" = "$(yabai -m query --windows --window east  2>/dev/null | jq '.display')" ] && yabai -m window --swap east  || (yabai -m window --display east  && yabai -m display --focus east)
 
 # --- Warp Window into BSP Split (ctrl + alt + cmd + h/j/k/l) ---
 ctrl + alt + cmd - h : yabai -m window --warp west
