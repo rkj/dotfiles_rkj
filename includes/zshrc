@@ -8,6 +8,13 @@ rkj_debug() {
 mkdir -p /tmp/gistatus_cache
 export GITSTATUS_DIR=/tmp/gitstatus_cache
 
+# Reset leftover terminal mouse tracking modes before every prompt (e.g. after dropped SSH/TUI)
+__rkj_reset_mouse_tracking() {
+  [[ -t 1 ]] && printf '\e[?1000l\e[?1002l\e[?1003l\e[?1005l\e[?1006l\e[?1015l\e[?1016l\e[?1004l\e[?25h'
+}
+autoload -Uz add-zsh-hook
+add-zsh-hook precmd __rkj_reset_mouse_tracking
+
 zstyle ':completion:*:functions' ignored-patterns '_*'
 setopt incappendhistory
 

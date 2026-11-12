@@ -2,6 +2,18 @@ if not contains -- no-query-term $fish_features
     set -Ua fish_features no-query-term
 end
 
+# Reset terminal mouse tracking and focus reporting modes after every command
+# and before every prompt. When an SSH session or TUI app (zellij, ohmyagy,
+# helix, vim, etc.) drops abruptly overnight, the terminal is otherwise left in
+# mouse-motion reporting mode (?1003h/?1006h), causing mouse movement over the
+# window to dump raw SGR control codes (^[[<35;...M).
+function __fish_reset_mouse_tracking --on-event fish_postexec --on-event fish_prompt
+    if status is-interactive; and isatty stdout
+        printf '\e[?1000l\e[?1002l\e[?1003l\e[?1005l\e[?1006l\e[?1015l\e[?1016l\e[?1004l\e[?25h'
+    end
+end
+__fish_reset_mouse_tracking
+
 # Bootstrap DOTFILES from this file's symlink path if not already set.
 # This file lives at $DOTFILES/config/fish/conf.d/env.fish, symlinked
 # from ~/.config/fish/conf.d/env.fish, so we can resolve it.

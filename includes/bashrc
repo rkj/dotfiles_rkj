@@ -1,3 +1,18 @@
+# Reset leftover terminal mouse tracking modes on prompt (e.g. after dropped SSH/TUI)
+__rkj_reset_mouse_tracking() {
+  if [ -t 1 ]; then
+    printf '\033[?1000l\033[?1002l\033[?1003l\033[?1005l\033[?1006l\033[?1015l\033[?1016l\033[?1004l\033[?25h'
+  fi
+}
+if [[ "$-" =~ i ]]; then
+  __rkj_reset_mouse_tracking
+  case "${PROMPT_COMMAND:-}" in
+    *__rkj_reset_mouse_tracking*) ;;
+    "") PROMPT_COMMAND="__rkj_reset_mouse_tracking" ;;
+    *) PROMPT_COMMAND="__rkj_reset_mouse_tracking;${PROMPT_COMMAND}" ;;
+  esac
+fi
+
 # start fish shell
 WHICH_FISH="$(which fish)"
 if [[ "$-" =~ i && -x "${WHICH_FISH}" && ! "${SHELL}" -ef "${WHICH_FISH}" ]]; then
