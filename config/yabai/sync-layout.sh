@@ -35,24 +35,35 @@ sync_once() {
   DISPLAYS_JSON="$(yabai -m query --displays 2>/dev/null)" || return 0
   SPACES_JSON="$(yabai -m query --spaces 2>/dev/null)" || return 0
   WINDOWS_JSON="$(yabai -m query --windows 2>/dev/null)" || return 0
+  [ -n "$DISPLAYS_JSON" ] && [ -n "$SPACES_JSON" ] && [ -n "$WINDOWS_JSON" ] || return 0
 
   # If any Chrome PWA window shows up as unresolved `app_mode_loader` (which happens
   # after Chrome crashes/restarts or wakes from sleep with `has-ax-reference: false`),
   # restart yabai once (with a 15s cooldown) so yabai re-resolves all AX references.
+  # Skip if macOS reports the lock screen / shield window is active, because AppKit
+  # refuses to vend AXWindow references system-wide in that state and restarting
+  # yabai cannot resolve them.
   if [ "$EVENT_TYPE" != "init" ]; then
-    BROKEN_PWA="$(printf '%s' "$WINDOWS_JSON" | jq '[.[] | select(.app == "app_mode_loader" or (."has-ax-reference" == false and .app == "Google Chrome"))] | length')"
-    if [ "${BROKEN_PWA:-0}" -gt 0 ]; then
-      NOW="$(date +%s)"
-      LAST_RESTART="$(cat "$RESTART_FILE" 2>/dev/null || echo 0)"
-      if [ $((NOW - LAST_RESTART)) -gt 15 ]; then
-        printf '%s\n' "$NOW" > "$RESTART_FILE"
-        yabai --restart-service >/dev/null 2>&1 &
-        exit 0
+    SHIELD_SHOWING="$(notifyutil -g com.apple.sessionagent.shieldWindowIsShowing 2>/dev/null | awk '{print $NF}')"
+    LOCK_SHOWING="$(notifyutil -g com.apple.sessionagent.screenLockUIIsShowing 2>/dev/null | awk '{print $NF}')"
+    if [ "${SHIELD_SHOWING:-0}" = "0" ] && [ "${LOCK_SHOWING:-0}" = "0" ]; then
+      BROKEN_PWA="$(printf '%s' "$WINDOWS_JSON" | jq '[.[] | select(.app == "app_mode_loader" or (."has-ax-reference" == false and .app == "Google Chrome"))] | length')"
+      if [ "${BROKEN_PWA:-0}" -gt 0 ]; then
+        NOW="$(date +%s)"
+        LAST_RESTART="$(cat "$RESTART_FILE" 2>/dev/null || echo 0)"
+        if [ $((NOW - LAST_RESTART)) -gt 15 ]; then
+          printf '%s\n' "$NOW" > "$RESTART_FILE"
+          yabai --restart-service >/dev/null 2>&1 &
+          exit 0
+        fi
       fi
     fi
   fi
 
-  NUM_DISPLAYS="$(printf '%s' "$DISPLAYS_JSON" | jq 'length')"
+  NUM_DISPLAYS="$(printf '%s' "$DISPLAYS_JSON" | jq 'length' 2>/dev/null)"
+  case "$NUM_DISPLAYS" in
+    ''|*[!0-9]*) return 0 ;;
+  esac
   # Track full display geometry + space assignment topology so delayed space migrations
   # across newly connected monitors are always detected as a topology change.
   CURRENT_MODE="$(printf '%s' "$DISPLAYS_JSON" | jq -r 'sort_by(.index) | map("\(.index):\(.frame.x | floor),\(.frame.y | floor),\(.frame.w | floor)x\(.frame.h | floor):\(.spaces | map(tostring) | join(","))") | join("|")')"
