@@ -3,6 +3,9 @@
 # - Single-monitor mode (laptop only): all spaces use `stack` layout
 # - Multi-monitor mode: center/main display spaces use `bsp`, side displays use `stack`
 #
+# Optional `~/.config/yabai/local.sh` can set `SPACE_LAYOUT_OVERRIDES` (space-separated
+# `label=layout` pairs, e.g. `main1=stack`) and define `apply_local_rules()`.
+#
 # Note: Never call global `yabai -m config layout ...` here because `yabai`
 # applies global layout changes to ALL existing spaces across all monitors.
 # Instead, set layout per-space via `yabai -m space <idx> --layout <bsp|stack>`
@@ -80,11 +83,37 @@ sync_once() {
   MANUAL_OVERRIDES=" $(cat "$OVERRIDE_FILE" 2>/dev/null | tr '\n' ' ') "
   SYNCED_SPACES=" $(cat "$SYNCED_SPACES_FILE" 2>/dev/null | tr '\n' ' ') "
 
+  # Resolve effective layout for a space index, honoring any label-based override
+  # from `SPACE_LAYOUT_OVERRIDES` (e.g. `main1=stack`).
+  resolve_target_layout() {
+    rtl_idx="$1"
+    rtl_layout="$2"
+    rtl_label=""
+    for rtl_pair in $SPACE_LABELS; do
+      case "$rtl_pair" in
+        "${rtl_idx}="*) rtl_label="${rtl_pair#*=}" ;;
+      esac
+    done
+    if [ -n "$rtl_label" ]; then
+      for rtl_override in $SPACE_LAYOUT_OVERRIDES; do
+        case "$rtl_override" in
+          "${rtl_label}="*)
+            rtl_val="${rtl_override#*=}"
+            case "$rtl_val" in
+              bsp|stack|float) rtl_layout="$rtl_val" ;;
+            esac
+            ;;
+        esac
+      done
+    fi
+    printf '%s' "$rtl_layout"
+  }
+
   # Ensure a visible space has `target_layout` (and fresh display bounds on first sync
   # after a topology change) unless manually overridden via Hyper+Space.
   sync_visible_space() {
     space_idx="$1"
-    target_layout="$2"
+    target_layout="$(resolve_target_layout "$space_idx" "$2")"
 
     case "$MANUAL_OVERRIDES" in
       *" $space_idx "*) return 0 ;;
@@ -106,10 +135,13 @@ sync_once() {
   }
 
   # 1. Label spaces according to display geometry
+  SPACE_LABELS=""
   if [ "$NUM_DISPLAYS" -le 1 ]; then
     pos=1
     for idx in $(printf '%s' "$SPACES_JSON" | jq -r '.[].index'); do
-      yabai -m space "$idx" --label "main${pos}" 2>/dev/null || true
+      label="main${pos}"
+      yabai -m space "$idx" --label "$label" 2>/dev/null || true
+      SPACE_LABELS="$SPACE_LABELS ${idx}=${label}"
       pos=$((pos + 1))
     done
   else
@@ -121,7 +153,9 @@ sync_once() {
 
     pos=1
     for idx in $(printf '%s' "$SPACES_JSON" | jq -r ".[] | select(.display == $MAIN_DISPLAY) | .index"); do
-      yabai -m space "$idx" --label "main${pos}" 2>/dev/null || true
+      label="main${pos}"
+      yabai -m space "$idx" --label "$label" 2>/dev/null || true
+      SPACE_LABELS="$SPACE_LABELS ${idx}=${label}"
       pos=$((pos + 1))
     done
 
@@ -130,6 +164,7 @@ sync_once() {
       left_space="$(printf '%s' "$SPACES_JSON" | jq -r ".[] | select(.display == $LEFT_DISPLAY) | .index" | head -n 1)"
       if [ -n "$left_space" ]; then
         yabai -m space "$left_space" --label "left" 2>/dev/null || true
+        SPACE_LABELS="$SPACE_LABELS ${left_space}=left"
       fi
     fi
 
@@ -138,14 +173,21 @@ sync_once() {
       right_space="$(printf '%s' "$SPACES_JSON" | jq -r ".[] | select(.display == $RIGHT_DISPLAY) | .index" | head -n 1)"
       if [ -n "$right_space" ]; then
         yabai -m space "$right_space" --label "right" 2>/dev/null || true
+        SPACE_LABELS="$SPACE_LABELS ${right_space}=right"
       fi
     fi
   fi
 
-  # 2. Refresh and apply window placement rules before tiling visible spaces
+  # 2. Load local overrides (per-space layout defaults and window placement rules)
+  YABAI_SYNC_SOURCING=1
+  SPACE_LAYOUT_OVERRIDES=""
+  unset -f apply_local_rules 2>/dev/null || true
+  if [ -f "$HOME/.config/yabai/local.sh" ]; then
+    . "$HOME/.config/yabai/local.sh"
+  fi
   if [ "$EVENT_TYPE" != "space_changed" ] || [ "$CURRENT_MODE" != "$PREV_MODE" ]; then
-    if [ -f "$HOME/.config/yabai/local.sh" ]; then
-      . "$HOME/.config/yabai/local.sh"
+    if command -v apply_local_rules >/dev/null 2>&1; then
+      apply_local_rules
     fi
     yabai -m rule --apply 2>/dev/null || true
     SPACES_JSON="$(yabai -m query --spaces 2>/dev/null)" || return 0
