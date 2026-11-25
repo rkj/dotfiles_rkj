@@ -15,12 +15,97 @@ STATE_FILE="/tmp/yabai_layout_state_${USER:-rkj}"
 SYNCED_SPACES_FILE="/tmp/yabai_synced_spaces_${USER:-rkj}"
 OVERRIDE_FILE="/tmp/yabai_manual_override_${USER:-rkj}"
 RESTART_FILE="/tmp/yabai_last_restart_${USER:-rkj}"
+RESTART_IDS_FILE="/tmp/yabai_last_restart_ids_${USER:-rkj}"
+RESTART_LOCK_DIR="/tmp/yabai_restart_lock_${USER:-rkj}"
+START_HISTORY_FILE="/tmp/yabai_start_history_${USER:-rkj}"
+AUTO_RESTART_HISTORY_FILE="/tmp/yabai_auto_restart_history_${USER:-rkj}"
+LOG_FILE="/tmp/yabai_sync_${USER:-rkj}.log"
 DISPLAY_PID_FILE="/tmp/yabai_display_sync_pid_${USER:-rkj}"
-SIGNALS_STAMP_FILE="/tmp/yabai_signals_v3_${USER:-rkj}"
+SIGNALS_STAMP_FILE="/tmp/yabai_signals_v4_${USER:-rkj}"
 EVENT_TYPE="${1:-init}"
+
+RESTART_WINDOW_SEC=600
+MAX_AUTO_RESTARTS=3
+START_LOOP_ALERT_THRESHOLD=3
+
+log_event() {
+  printf '%s [%s] %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$EVENT_TYPE" "$1" >> "$LOG_FILE" 2>/dev/null || true
+}
+
+notify_user() {
+  command -v osascript >/dev/null 2>&1 || return 0
+  osascript \
+    -e 'on run argv' \
+    -e 'display notification (item 1 of argv) with title "yabai" subtitle (item 2 of argv)' \
+    -e 'end run' \
+    "$2" "$1" >/dev/null 2>&1 &
+}
+
+notify_throttled() {
+  nt_tag="$1"
+  nt_cooldown="$2"
+  nt_sub="$3"
+  nt_msg="$4"
+  nt_file="/tmp/yabai_notify_${nt_tag}_${USER:-rkj}"
+  nt_now="$(date +%s)"
+  nt_last="$(cat "$nt_file" 2>/dev/null || echo 0)"
+  case "$nt_last" in ''|*[!0-9]*) nt_last=0 ;; esac
+  if [ $((nt_now - nt_last)) -ge "$nt_cooldown" ]; then
+    printf '%s\n' "$nt_now" > "$nt_file"
+    notify_user "$nt_sub" "$nt_msg"
+    return 0
+  fi
+  return 1
+}
+
+# Filter a timestamp file to entries within the rolling window and echo the count
+prune_timestamps() {
+  pt_file="$1"
+  pt_now="$2"
+  pt_win="$3"
+  pt_cutoff=$((pt_now - pt_win))
+  pt_tmp="${pt_file}.tmp.$$"
+  pt_count=0
+  : > "$pt_tmp"
+  if [ -f "$pt_file" ]; then
+    while IFS= read -r pt_ts; do
+      case "$pt_ts" in
+        ''|*[!0-9]*) continue ;;
+      esac
+      if [ "$pt_ts" -ge "$pt_cutoff" ] && [ "$pt_ts" -le "$pt_now" ]; then
+        printf '%s\n' "$pt_ts" >> "$pt_tmp"
+        pt_count=$((pt_count + 1))
+      fi
+    done < "$pt_file"
+  fi
+  mv -f "$pt_tmp" "$pt_file" 2>/dev/null || rm -f "$pt_tmp"
+  printf '%s' "$pt_count"
+}
 
 sync_once() {
   force_pass="${1:-0}"
+
+  if [ "$EVENT_TYPE" = "init" ]; then
+    rmdir "$RESTART_LOCK_DIR" 2>/dev/null || true
+    INIT_NOW="$(date +%s)"
+    printf '%s\n' "$INIT_NOW" >> "$START_HISTORY_FILE"
+    RECENT_STARTS="$(prune_timestamps "$START_HISTORY_FILE" "$INIT_NOW" "$RESTART_WINDOW_SEC")"
+    log_event "yabai started (starts in last 10m: ${RECENT_STARTS})"
+    if [ -f "$LOG_FILE" ] && [ "$(wc -l < "$LOG_FILE" 2>/dev/null | tr -d ' ')" -gt 300 ]; then
+      tail -n 200 "$LOG_FILE" > "${LOG_FILE}.tmp.$$" 2>/dev/null && mv -f "${LOG_FILE}.tmp.$$" "$LOG_FILE" 2>/dev/null || rm -f "${LOG_FILE}.tmp.$$"
+    fi
+    if [ "${RECENT_STARTS:-0}" -ge "$START_LOOP_ALERT_THRESHOLD" ]; then
+      LAST_AUTO="$(cat "$RESTART_FILE" 2>/dev/null || echo 0)"
+      case "$LAST_AUTO" in ''|*[!0-9]*) LAST_AUTO=0 ;; esac
+      # Avoid duplicate banner right after an already-notified auto-restart unless
+      # starts exceed the auto-restart budget (e.g. external crashes/respawns).
+      if [ $((INIT_NOW - LAST_AUTO)) -gt 10 ] || [ "${RECENT_STARTS:-0}" -gt "$MAX_AUTO_RESTARTS" ]; then
+        notify_throttled "start_loop" 300 \
+          "Frequent restarts detected" \
+          "yabai restarted ${RECENT_STARTS} times in the last 10m. See ${LOG_FILE}" || true
+      fi
+    fi
+  fi
 
   if [ "$EVENT_TYPE" = "init" ] || [ ! -f "$SIGNALS_STAMP_FILE" ]; then
     SYNC_SCRIPT="$HOME/.config/yabai/sync-layout.sh"
@@ -31,6 +116,7 @@ sync_once() {
     yabai -m signal --add event=display_changed      label="sync_display_changed" action="$SYNC_SCRIPT space_changed" 2>/dev/null || true
     yabai -m signal --add event=system_woke          label="sync_system_woke"     action="$SYNC_SCRIPT display"       2>/dev/null || true
     yabai -m rule   --add label="rule_deskrest"      app="^[Dd]esk ?[Rr]est$"     manage=off                          2>/dev/null || true
+    yabai -m rule   --add label="rule_workrave"      app="^[Ww]orkrave$"          manage=off                          2>/dev/null || true
     yabai -m rule   --apply                                                                                           2>/dev/null || true
     printf '1\n' > "$SIGNALS_STAMP_FILE"
   fi
@@ -40,24 +126,94 @@ sync_once() {
   WINDOWS_JSON="$(yabai -m query --windows 2>/dev/null)" || return 0
   [ -n "$DISPLAYS_JSON" ] && [ -n "$SPACES_JSON" ] && [ -n "$WINDOWS_JSON" ] || return 0
 
-  # If any Chrome PWA window shows up as unresolved `app_mode_loader` (which happens
-  # after Chrome crashes/restarts or wakes from sleep with `has-ax-reference: false`),
-  # restart yabai once (with a 15s cooldown) so yabai re-resolves all AX references.
-  # Skip if macOS reports the lock screen / shield window is active, because AppKit
-  # refuses to vend AXWindow references system-wide in that state and restarting
-  # yabai cannot resolve them.
+  # If any currently visible Chrome / Chrome PWA window shows up as unresolved
+  # `app_mode_loader` or loses its AX reference (`has-ax-reference: false`, e.g.
+  # after Chrome crashes/restarts or wakes from sleep), restart yabai ONCE per
+  # broken window ID, guarded by exponential backoff (30s / 2m / 5m) and a
+  # circuit breaker (max 3 auto-restarts per 10m) with macOS UI notifications.
+  # Ignore non-visible windows (inactive spaces routinely lack AX references with
+  # SIP enabled) and skip while the lock screen / shield window is active.
   if [ "$EVENT_TYPE" != "init" ]; then
     SHIELD_SHOWING="$(notifyutil -g com.apple.sessionagent.shieldWindowIsShowing 2>/dev/null | awk '{print $NF}')"
     LOCK_SHOWING="$(notifyutil -g com.apple.sessionagent.screenLockUIIsShowing 2>/dev/null | awk '{print $NF}')"
     if [ "${SHIELD_SHOWING:-0}" = "0" ] && [ "${LOCK_SHOWING:-0}" = "0" ]; then
-      BROKEN_PWA="$(printf '%s' "$WINDOWS_JSON" | jq '[.[] | select(.app == "app_mode_loader" or (."has-ax-reference" == false and .app == "Google Chrome"))] | length')"
-      if [ "${BROKEN_PWA:-0}" -gt 0 ]; then
-        NOW="$(date +%s)"
-        LAST_RESTART="$(cat "$RESTART_FILE" 2>/dev/null || echo 0)"
-        if [ $((NOW - LAST_RESTART)) -gt 15 ]; then
-          printf '%s\n' "$NOW" > "$RESTART_FILE"
-          yabai --restart-service >/dev/null 2>&1 &
-          exit 0
+      # Prune previously attempted window IDs that are now healthy or closed
+      if ALL_BROKEN_IDS="$(printf '%s' "$WINDOWS_JSON" | jq -r '[.[] | select(.app == "app_mode_loader" or (."has-ax-reference" == false and .app == "Google Chrome")) | .id] | map(tostring) | join(" ")' 2>/dev/null)"; then
+        if [ -f "$RESTART_IDS_FILE" ]; then
+          KEPT_IDS=""
+          for prev_id in $(cat "$RESTART_IDS_FILE" 2>/dev/null); do
+            case " $ALL_BROKEN_IDS " in
+              *" $prev_id "*) KEPT_IDS="$KEPT_IDS $prev_id" ;;
+            esac
+          done
+          if [ -n "$KEPT_IDS" ]; then
+            printf '%s\n' "$KEPT_IDS" > "$RESTART_IDS_FILE"
+          else
+            rm -f "$RESTART_IDS_FILE"
+          fi
+        fi
+      fi
+
+      VISIBLE_BROKEN_IDS="$(printf '%s' "$WINDOWS_JSON" | jq -r '[.[] | select(."is-visible" == true and ."is-minimized" == false and ."is-hidden" == false and (.frame.w > 0 and .frame.h > 0) and (.app == "app_mode_loader" or (."has-ax-reference" == false and .app == "Google Chrome"))) | .id] | map(tostring) | join(" ")' 2>/dev/null || true)"
+      if [ -n "$VISIBLE_BROKEN_IDS" ]; then
+        PREV_ATTEMPTED=" $(cat "$RESTART_IDS_FILE" 2>/dev/null | tr '\n' ' ') "
+        NEW_BROKEN_IDS=""
+        for bid in $VISIBLE_BROKEN_IDS; do
+          case "$PREV_ATTEMPTED" in
+            *" $bid "*) ;;
+            *) NEW_BROKEN_IDS="$NEW_BROKEN_IDS $bid" ;;
+          esac
+        done
+        if [ -n "$NEW_BROKEN_IDS" ]; then
+          find "$RESTART_LOCK_DIR" -maxdepth 0 -mmin +1 -exec rmdir {} + 2>/dev/null || true
+          if mkdir "$RESTART_LOCK_DIR" 2>/dev/null; then
+            NOW="$(date +%s)"
+            LAST_RESTART="$(cat "$RESTART_FILE" 2>/dev/null || echo 0)"
+            case "$LAST_RESTART" in ''|*[!0-9]*) LAST_RESTART=0 ;; esac
+            PREV_ATTEMPTED=" $(cat "$RESTART_IDS_FILE" 2>/dev/null | tr '\n' ' ') "
+            STILL_NEW=""
+            for bid in $NEW_BROKEN_IDS; do
+              case "$PREV_ATTEMPTED" in
+                *" $bid "*) ;;
+                *) STILL_NEW="$STILL_NEW $bid" ;;
+              esac
+            done
+            if [ -n "$STILL_NEW" ]; then
+              RECENT_AUTO="$(prune_timestamps "$AUTO_RESTART_HISTORY_FILE" "$NOW" "$RESTART_WINDOW_SEC")"
+              BROKEN_DESC="$(printf '%s' "$WINDOWS_JSON" | jq -r '[.[] | select(."is-visible" == true and ."is-minimized" == false and ."is-hidden" == false and (.frame.w > 0 and .frame.h > 0) and (.app == "app_mode_loader" or (."has-ax-reference" == false and .app == "Google Chrome"))) | "\(.app) (id \(.id))"] | join(", ")' 2>/dev/null || printf '%s' "$STILL_NEW")"
+              if [ "${RECENT_AUTO:-0}" -ge "$MAX_AUTO_RESTARTS" ]; then
+                rmdir "$RESTART_LOCK_DIR" 2>/dev/null || true
+                if notify_throttled "throttled" 300 \
+                  "Auto-restart paused (throttled)" \
+                  "Hit ${MAX_AUTO_RESTARTS} restarts in 10m (${BROKEN_DESC}). Use Hyper+Backspace to restart manually."; then
+                  log_event "auto-restart throttled (${RECENT_AUTO}/${MAX_AUTO_RESTARTS} in 10m) for ${BROKEN_DESC}"
+                fi
+              else
+                case "${RECENT_AUTO:-0}" in
+                  0) COOLDOWN=30 ;;
+                  1) COOLDOWN=120 ;;
+                  *) COOLDOWN=300 ;;
+                esac
+                if [ $((NOW - LAST_RESTART)) -gt "$COOLDOWN" ]; then
+                  NEW_COUNT=$((RECENT_AUTO + 1))
+                  printf '%s\n' "$NOW" > "$RESTART_FILE"
+                  printf '%s\n' "$NOW" >> "$AUTO_RESTART_HISTORY_FILE"
+                  printf '%s\n' "$PREV_ATTEMPTED $STILL_NEW" | tr ' ' '\n' | grep -E '^[0-9]+$' | sort -u | tr '\n' ' ' > "$RESTART_IDS_FILE"
+                  printf '\n' >> "$RESTART_IDS_FILE"
+                  rmdir "$RESTART_LOCK_DIR" 2>/dev/null || true
+                  log_event "auto-restarting yabai (${NEW_COUNT}/${MAX_AUTO_RESTARTS} in 10m) for ${BROKEN_DESC}"
+                  notify_user \
+                    "Auto-restarted (${NEW_COUNT}/${MAX_AUTO_RESTARTS} in 10m)" \
+                    "Recovering broken AX window: ${BROKEN_DESC}"
+                  yabai --restart-service >/dev/null 2>&1 &
+                  exit 0
+                fi
+                rmdir "$RESTART_LOCK_DIR" 2>/dev/null || true
+              fi
+            else
+              rmdir "$RESTART_LOCK_DIR" 2>/dev/null || true
+            fi
+          fi
         fi
       fi
     fi
@@ -79,6 +235,12 @@ sync_once() {
     rm -f "$SYNCED_SPACES_FILE"
   fi
   printf '%s\n' "$CURRENT_MODE" > "$STATE_FILE"
+
+  # On `window_created`, yabai already evaluates all registered rules automatically.
+  # Skip re-labeling spaces and global `yabai -m rule --apply` when topology is unchanged.
+  if [ "$EVENT_TYPE" = "window_created" ] && [ "$CURRENT_MODE" = "$PREV_MODE" ]; then
+    return 0
+  fi
 
   MANUAL_OVERRIDES=" $(cat "$OVERRIDE_FILE" 2>/dev/null | tr '\n' ' ') "
   SYNCED_SPACES=" $(cat "$SYNCED_SPACES_FILE" 2>/dev/null | tr '\n' ' ') "

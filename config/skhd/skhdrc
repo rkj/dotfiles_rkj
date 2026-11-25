@@ -86,5 +86,5 @@ hyper - 3 : yabai -m display --focus 3
 ctrl + alt - 0x1B : yabai -m window --resize left:20:0  || yabai -m window --resize right:-20:0
 ctrl + alt - 0x18 : yabai -m window --resize left:-20:0 || yabai -m window --resize right:20:0
 
-# --- Restart yabai & reload skhd (if an app crashes/restores unmanaged windows) ---
-hyper - backspace : yabai --restart-service && skhd -r
+# --- Restart yabai & reload skhd (also resets auto-restart throttle state) ---
+hyper - backspace : rm -f "/tmp/yabai_auto_restart_history_${USER:-rkj}" "/tmp/yabai_last_restart_ids_${USER:-rkj}" "/tmp/yabai_notify_throttled_${USER:-rkj}" && yabai --restart-service && skhd -r
